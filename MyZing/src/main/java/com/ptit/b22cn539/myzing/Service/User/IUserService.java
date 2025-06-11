@@ -1,0 +1,15 @@
+package com.ptit.b22cn539.myzing.Service.User;
+
+import com.ptit.b22cn539.myzing.DTO.Request.User.Oauth2GoogleRequest;
+import com.ptit.b22cn539.myzing.DTO.Request.User.UserLoginRequest;
+import com.ptit.b22cn539.myzing.DTO.Request.User.UserRegisterRequest;
+import com.ptit.b22cn539.myzing.DTO.Response.User.JwtResponse;
+import com.ptit.b22cn539.myzing.DTO.Response.User.UserResponse;
+import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
+
+public interface IUserService {
+    JwtResponse login(UserLoginRequest userLoginRequest);
+    UserEntity getUserByEmail(String email);
+    UserResponse register(UserRegisterRequest userRegisterRequest);
+    JwtResponse loginGoogle(Oauth2GoogleRequest googleRequest);
+}

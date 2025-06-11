@@ -1,0 +1,93 @@
+package com.ptit.b22cn539.myzing.Service.Playlist;
+
+import com.ptit.b22cn539.myzing.Commons.Mappers.PlaylistMapper;
+import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
+import com.ptit.b22cn539.myzing.DTO.Request.Playlist.PlaylistRequest;
+import com.ptit.b22cn539.myzing.DTO.Response.Playlist.PlaylistResponse;
+import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
+import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
+import com.ptit.b22cn539.myzing.Models.Entity.PlaylistEntity;
+import com.ptit.b22cn539.myzing.Models.Entity.SongEntity;
+import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
+import com.ptit.b22cn539.myzing.Repository.IPlaylistRepository;
+import com.ptit.b22cn539.myzing.Service.Song.ISongService;
+import com.ptit.b22cn539.myzing.Service.User.IUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+public class PlaylistServiceImpl implements IPlaylistService {
+    private final ISongService songService;
+    private final IUserService userService;
+    private final IPlaylistRepository playlistRepository;
+    private final PlaylistMapper playlistMapper;
+
+    @Override
+    @Transactional
+    public PlaylistResponse createPlaylist(PlaylistRequest playlistRequest) {
+        Set<SongEntity> songs = new HashSet<>();
+        playlistRequest.getSongs().forEach(songId -> {
+            SongEntity song = this.songService.getSongById(songId);
+            songs.add(song);
+        });
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.userService.getUserByEmail(email);
+        PlaylistEntity playlistEntity = new PlaylistEntity(playlistRequest, songs, user);
+        this.playlistRepository.save(playlistEntity);
+        return this.playlistMapper.toResponse(playlistEntity);
+    }
+
+    @Override
+    @Transactional
+    public PlaylistResponse addSongToPlaylist(String playlistId, List<String> songIds) {
+        PlaylistEntity playlist = this.getPlaylistById(playlistId);
+        Set<SongEntity> songs = playlist.getSongs();
+        songIds.forEach(songId -> {
+            SongEntity song = this.songService.getSongById(songId);
+            songs.add(song);
+        });
+        playlist.setSongs(songs);
+        this.playlistRepository.save(playlist);
+        return this.playlistMapper.toResponse(playlist);
+    }
+
+
+    @Override
+    @Transactional
+    public PlaylistResponse removeSongFromPlaylist(String playlistId, List<String> songIds) {
+        PlaylistEntity playlist = this.getPlaylistById(playlistId);
+        Set<SongEntity> songs = playlist.getSongs();
+        songIds.forEach(songId -> {
+            SongEntity song = this.songService.getSongById(songId);
+            songs.remove(song);
+        });
+        playlist.setSongs(songs);
+        this.playlistRepository.save(playlist);
+        return this.playlistMapper.toResponse(playlist);
+    }
+
+    @Override
+    @Transactional
+    public PlaylistEntity getPlaylistById(String playlistId) {
+        return this.playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new DataInvalidException(AppException.PLAYLIST_NOT_FOUND));
+
+    }
+
+    @Override
+    public PagedModel<PlaylistResponse> getAllPlaylistPublic(Integer page, Integer limit) {
+        Pageable pageable = PaginationUtils.getPageRequest(page, limit);
+        Page<PlaylistEntity> playlists = this.playlistRepository.findByCommunalIsTrue(pageable);
+        return new PagedModel<>(playlists.map(this.playlistMapper::toResponse));
+    }
+}

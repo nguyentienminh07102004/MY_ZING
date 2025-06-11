@@ -1,0 +1,62 @@
+package com.ptit.b22cn539.myzing.Models.Entity;
+
+import com.ptit.b22cn539.myzing.DTO.Request.Playlist.PlaylistRequest;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.Date;
+import java.util.Set;
+
+@Entity
+@Table(name = "playlists")
+@Getter
+@Setter
+@NoArgsConstructor
+@EntityListeners(value = AuditingEntityListener.class)
+public class PlaylistEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    private String name;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    @ManyToMany
+    @JoinTable(name = "playlist_songs",
+            joinColumns = @JoinColumn(name = "playlistId"),
+            inverseJoinColumns = @JoinColumn(name = "songId"))
+    private Set<SongEntity> songs;
+    @CreatedDate
+    @Temporal(value = TemporalType.TIMESTAMP)
+    private Date createdDate;
+    private String image;
+    @ManyToOne
+    @JoinColumn(name = "email", referencedColumnName = "email")
+    private UserEntity user;
+    @ColumnDefault(value = "true")
+    @Column(name = "isPublic")
+    private Boolean communal = true;
+
+    public PlaylistEntity(PlaylistRequest playlistRequest, Set<SongEntity> songs, UserEntity user) {
+        this.name = playlistRequest.getName();
+        this.description = playlistRequest.getDescription();
+        this.songs = songs;
+        this.user = user;
+    }
+}
