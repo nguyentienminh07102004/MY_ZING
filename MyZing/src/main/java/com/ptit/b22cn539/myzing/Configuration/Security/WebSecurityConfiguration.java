@@ -50,6 +50,10 @@ public class WebSecurityConfiguration {
 
                 .requestMatchers(HttpMethod.PUT, "/songs").permitAll()
                 .requestMatchers(HttpMethod.GET, "/songs").permitAll()
+                .requestMatchers(HttpMethod.POST, "/songs").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/songs/favourites/{id}").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/songs/{ids}").authenticated()
+                .requestMatchers(HttpMethod.GET, "/songs/my-song").authenticated()
 
                 .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/login/google").permitAll()

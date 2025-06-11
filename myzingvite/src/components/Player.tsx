@@ -53,8 +53,8 @@ const Player = () => {
     }
   };
 
-  const handleVolumeChange = (event: Event, newValue: number | number[]) => {
-    setVolume(newValue as number);
+  const handleVolumeChange = (event: Event, newValue: number) => {
+    setVolume(newValue);
   };
 
   const formatTime = (time: number) => {
@@ -74,7 +74,6 @@ const Player = () => {
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
-      console.log(audioRef.current.duration)
     }
   };
 
@@ -83,7 +82,9 @@ const Player = () => {
       setIsRepeat(!isRepeat);
     }
   }
-  console.log(isRepeat)
+  const style = {
+    border: "2px solid white",
+  }
   return (
     <Box
       sx={{
@@ -163,7 +164,7 @@ const Player = () => {
           <IconButton>
             <SkipNextIcon />
           </IconButton>
-          <IconButton size="small">
+          <IconButton size="small" style={isRepeat ? style : undefined}>
             <RepeatIcon fontSize="small" onClick={handleRepeat} />
           </IconButton>
         </Stack>

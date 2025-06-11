@@ -66,4 +66,10 @@ public class SongController {
         this.songService.deleteSong(ids);
         return ResponseEntity.status(200).build();
     }
+
+    @PostMapping(value = "/favourites/{id}")
+    public ResponseEntity<Void> likeSong(@PathVariable String id) {
+        this.songService.likeSong(id);
+        return ResponseEntity.status(200).build();
+    }
 }

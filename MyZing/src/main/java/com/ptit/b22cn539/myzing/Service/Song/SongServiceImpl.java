@@ -12,6 +12,7 @@ import com.ptit.b22cn539.myzing.Models.Entity.SongEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.UserSongFavouriteEntity;
 import com.ptit.b22cn539.myzing.Repository.ISongRepository;
+import com.ptit.b22cn539.myzing.Repository.IUserFavouriteSongRepository;
 import com.ptit.b22cn539.myzing.Service.AWS.IAWSService;
 import com.ptit.b22cn539.myzing.Service.Singer.ISingerService;
 import com.ptit.b22cn539.myzing.Service.User.IUserService;
@@ -32,6 +33,7 @@ import java.util.Set;
 @Slf4j
 public class SongServiceImpl implements ISongService {
     private final ISongRepository songRepository;
+    private final IUserFavouriteSongRepository userFavouriteSongRepository;
     private final ISingerService singerService;
     private final IAWSService awsService;
     private final IUserService userService;
@@ -108,11 +110,15 @@ public class SongServiceImpl implements ISongService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = this.userService.getUserByEmail(email);
         SongEntity song = this.getSongById(id);
-        UserSongFavouriteEntity userSongFavouriteEntity = new UserSongFavouriteEntity();
-        userSongFavouriteEntity.setUser(user);
-        userSongFavouriteEntity.setSong(song);
-        song.getUserSongFavourites().add(userSongFavouriteEntity);
-        this.songRepository.save(song);
+        if (!this.userFavouriteSongRepository.existsByUser_EmailAndSong_Id(email, id)) {
+            UserSongFavouriteEntity userSongFavouriteEntity = new UserSongFavouriteEntity();
+            userSongFavouriteEntity.setUser(user);
+            userSongFavouriteEntity.setSong(song);
+            song.getUserSongFavourites().add(userSongFavouriteEntity);
+            this.songRepository.save(song);
+        } else {
+            this.userFavouriteSongRepository.deleteByUser_EmailAndSong_Id(email, id);
+        }
     }
 
     @Override
