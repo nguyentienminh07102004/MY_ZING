@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,6 +29,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,6 +37,7 @@ public class UserEntity {
     private String firstName;
     private String lastName;
     @Column(unique = true, nullable = false)
+    @EqualsAndHashCode.Include
     private String email;
     private String password;
     private String phone;
@@ -67,5 +70,6 @@ public class UserEntity {
         this.email = email;
         this.password = password;
         this.picture = picture;
+        this.role = ROLE.USER;
     }
 }

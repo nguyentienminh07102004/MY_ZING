@@ -1,4 +1,4 @@
-package com.ptit.b22cn539.myzing.Controller;
+package com.ptit.b22cn539.myzing.Controller.Authentication;
 
 import com.ptit.b22cn539.myzing.Commons.Validate.FileNotNullOrEmpty.FileNotNullOrEmpty;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongCreateRequest;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,9 +27,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/songs")
+@RequestMapping(value = "/auth/songs")
 @RequiredArgsConstructor
-public class SongController {
+public class SongAuthenticationController {
     private final ISongService songService;
     private final ISongElasticsearchService songElasticsearchService;
 
@@ -48,12 +49,6 @@ public class SongController {
         return ResponseEntity.status(200).body(songResponse);
     }
 
-    @GetMapping()
-    public ResponseEntity<PagedModel<SongResponse>> getSong(@ModelAttribute SongSearchRequest songSearchRequest) {
-        PagedModel<SongResponse> res = this.songElasticsearchService.findSong(songSearchRequest);
-        return ResponseEntity.status(200).body(res);
-    }
-
     @GetMapping(value = "my-song")
     public ResponseEntity<PagedModel<SongResponse>> getMySong(@ModelAttribute SongSearchRequest songSearchRequest) {
         PagedModel<SongResponse> res = this.songElasticsearchService.findMySong(songSearchRequest);
@@ -71,5 +66,12 @@ public class SongController {
     public ResponseEntity<Void> likeSong(@PathVariable String id) {
         this.songService.likeSong(id);
         return ResponseEntity.status(200).build();
+    }
+
+    @GetMapping(value = "/my-favourites")
+    public ResponseEntity<PagedModel<SongResponse>> getMySongFavourites(@RequestParam(required = false) Integer page,
+                                                                        @RequestParam(required = false) Integer limit) {
+        PagedModel<SongResponse> songResponses = this.songService.getMySongFavourites(page, limit);
+        return ResponseEntity.status(200).body(songResponses);
     }
 }

@@ -5,8 +5,10 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.ScoreSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.IdsQuery;
 import com.ptit.b22cn539.myzing.Commons.Events.SongCreateUpdateEvent;
 import com.ptit.b22cn539.myzing.Commons.Events.SongDeleteEvent;
+import com.ptit.b22cn539.myzing.Commons.Mappers.SongMapper;
 import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongSearchRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.Song.SongResponse;
@@ -24,6 +26,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.DeleteQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQuery;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Async;
@@ -31,6 +34,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedList;
@@ -42,6 +46,7 @@ import java.util.Objects;
 @Slf4j
 public class SongElasticsearchService implements ISongElasticsearchService {
     private final ElasticsearchOperations elasticsearchOperations;
+    private final SongMapper songMapper;
     private final HashOperations<String, String, Object> hashOperations;
 
     @TransactionalEventListener
@@ -54,7 +59,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
             SongDocument songDocument = new SongDocument(song);
             IndexQuery indexQuery = IndexQuery.builder()
                     .withId(song.getId())
-                    .withOpType(IndexQuery.OpType.CREATE)
+                    .withOpType(IndexQuery.OpType.INDEX)
                     .withObject(songDocument)
                     .build();
             indexQueries.add(indexQuery);
@@ -104,19 +109,26 @@ public class SongElasticsearchService implements ISongElasticsearchService {
                                         ));
                             }
                             if (songSearchRequest.getSingerIds() != null && !songSearchRequest.getSingerIds().isEmpty()) {
-                                builder = builder.must(m2 -> m2.terms(m -> m.field("%s.keyword".formatted(SongDocument.SINGER_IDS))
+                                builder = builder.must(m2 -> m2.terms(m -> m.field(SongDocument.SINGER_IDS)
                                         .terms(t -> t.value(songSearchRequest.getSingerIds().stream().map(FieldValue::of).toList()))));
                             }
                             if (songSearchRequest.getCreatedDateFrom() != null) {
-                                builder = builder.must(m3 -> m3.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE).gte(songSearchRequest.getCreatedDateFrom().toInstant().toString()))));
+                                builder = builder.must(m3 -> m3.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE)
+                                        .gte(songSearchRequest.getCreatedDateFrom().toInstant().toString()))));
                             }
                             if (songSearchRequest.getCreatedDateTo() != null) {
-                                builder = builder.must(m4 -> m4.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE).lte(songSearchRequest.getCreatedDateTo().toInstant().toString()))));
+                                builder = builder.must(m4 -> m4.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE)
+                                        .lte(songSearchRequest.getCreatedDateTo().toInstant().toString()))));
                             }
                             if (StringUtils.hasText(songSearchRequest.getEmail())) {
                                 builder = builder
                                         .must(m5 -> m5.matchPhrase(t -> t.field(SongDocument.EMAIL)
                                                 .query(songSearchRequest.getEmail())));
+                            }
+                            if (!CollectionUtils.isEmpty(songSearchRequest.getTags())) {
+                                builder = builder.must(m -> m.terms(t -> t.field(SongDocument.TAGS)
+                                        .terms(v -> v.value(songSearchRequest.getTags().stream()
+                                                .map(FieldValue::of).toList()))));
                             }
                             return builder;
                         }))
@@ -126,7 +138,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         SearchHits<SongDocument> searchHits = this.elasticsearchOperations.search(querySearch, SongDocument.class);
         List<SongResponse> list = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .map(SongResponse::new)
+                .map(this.songMapper::toResponse)
                 .toList();
         long totalElements = searchHits.getTotalHits();
         this.hashOperations.put(key, "list", list);
@@ -140,6 +152,17 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         searchRequest.setEmail(email);
         return this.findSong(searchRequest);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SongResponse findSongById(String id) {
+        Query query = NativeQuery.builder()
+                .withQuery(q -> q.ids(IdsQuery.of(ids -> ids.values(id))))
+                .build();
+        SearchHits<SongDocument> searchHits = this.elasticsearchOperations.search(query, SongDocument.class);
+        SongDocument songDocument = searchHits.getSearchHit(0).getContent();
+        return this.songMapper.toResponse(songDocument);
     }
 
     @TransactionalEventListener

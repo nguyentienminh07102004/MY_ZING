@@ -1,4 +1,4 @@
-package com.ptit.b22cn539.myzing.Controller;
+package com.ptit.b22cn539.myzing.Controller.Authentication;
 
 import com.ptit.b22cn539.myzing.DTO.Request.Singer.SingerRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.Singer.SingerResponse;
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping(value = "/singers")
+@RequestMapping(value = "/auth/singers")
 @RequiredArgsConstructor
-public class SingerController {
+public class SingerAuthenticationController {
     private final ISingerService service;
 
     @PostMapping()

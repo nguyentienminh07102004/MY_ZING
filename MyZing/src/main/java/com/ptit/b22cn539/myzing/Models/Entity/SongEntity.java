@@ -73,6 +73,12 @@ public class SongEntity {
     @ManyToMany(mappedBy = "songs")
     private List<PlaylistEntity> playlists;
 
+    @ManyToMany
+    @JoinTable(name = "song_tags",
+    joinColumns = @JoinColumn(name = "songId"),
+    inverseJoinColumns = @JoinColumn(name = "tagName"))
+    private Set<TagEntity> tags;
+
     public SongEntity(SongCreateRequest songRequest) {
         this.name = songRequest.getName();
         this.description = songRequest.getDescription();

@@ -35,10 +35,12 @@ public class SongDocument {
     private Date createdDate;
     @Field(type = FieldType.Long)
     private Long numberOfListens = 0L;
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Keyword) // Constant_Keyword là keyword const + keyword (mọi document)
     private List<String> singerIds;
     @Field(type = FieldType.Keyword)
     private String email;
+    @Field(type = FieldType.Keyword)
+    private List<String> tags;
 
     public SongDocument(SongEntity song) {
         this.id = song.getId();
@@ -53,13 +55,12 @@ public class SongDocument {
                 .toList();
     }
 
-    public static final String ID = "id";
     public static final String NAME = "name";
-    public static final String DESCRIPTION = "description";
-    public static final String URL = "url";
-    public static final String IMAGE_URL = "imageUrl";
     public static final String EMAIL = "email";
     public static final String CREATED_DATE = "createdDate";
     public static final String NUMBER_OF_LISTENS = "numberOfListens";
     public static final String SINGER_IDS = "singerIds";
+    public static final String TAGS = "tags";
+
+    // có thể tìm hiểu thêm về complete suggest
 }

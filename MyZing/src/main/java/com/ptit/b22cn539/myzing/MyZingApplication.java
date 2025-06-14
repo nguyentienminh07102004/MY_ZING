@@ -23,8 +23,8 @@ public class MyZingApplication {
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10); // số thread luôn tồn tại
-        executor.setMaxPoolSize(100); // số thread tối đa
+        executor.setCorePoolSize(10); // số thread luôn tồn tại tối thiểu
+        executor.setMaxPoolSize(100); // số thread có thể tồn tại tối đa
         executor.setQueueCapacity(500); // số lượng task có thể chờ xử lý
         executor.setThreadNamePrefix("AsyncThread-");
         executor.initialize();

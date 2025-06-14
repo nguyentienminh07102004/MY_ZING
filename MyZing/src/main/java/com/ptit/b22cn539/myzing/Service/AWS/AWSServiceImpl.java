@@ -9,11 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Utilities;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -42,6 +45,7 @@ public class AWSServiceImpl implements IAWSService {
                     .key(fileName)
                     .acl(ObjectCannedACL.PUBLIC_READ_WRITE)
                     .contentType(file.getContentType())
+                    .contentDisposition("attachment; filename=%s".formatted(fileName))
                     .contentLength(file.getSize())
                     .build();
             this.s3Client.putObject(objectRequest, RequestBody.fromBytes(file.getBytes()));
@@ -72,5 +76,15 @@ public class AWSServiceImpl implements IAWSService {
                 .region(Region.AP_NORTHEAST_1)
                 .build();
         return utilities.getUrl(getUrlRequest).toExternalForm();
+    }
+
+    @Override
+    @Transactional
+    public ResponseInputStream<GetObjectResponse> downloadFile(String fileName) {
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileName)
+                .build();
+        return this.s3Client.getObject(getObjectRequest);
     }
 }

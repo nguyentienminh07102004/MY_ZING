@@ -12,5 +12,8 @@ public interface IPlaylistService {
     PlaylistResponse addSongToPlaylist(String playlistId, List<String> songIds);
     PlaylistResponse removeSongFromPlaylist(String playlistId, List<String> songIds);
     PlaylistEntity getPlaylistById(String playlistId);
+
+    PlaylistResponse getPlaylistResponseById(String id);
+
     PagedModel<PlaylistResponse> getAllPlaylistPublic(Integer page, Integer limit);
 }

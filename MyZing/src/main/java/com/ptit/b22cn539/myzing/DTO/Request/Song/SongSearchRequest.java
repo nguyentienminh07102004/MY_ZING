@@ -30,6 +30,7 @@ public class SongSearchRequest {
     private String sortBy = SongDocument.NUMBER_OF_LISTENS;
     @Builder.Default
     private SortOrder sortOrder = SortOrder.Desc;
+    private List<String> tags;
     private String email;
     @Builder.Default
     private Integer page = 1;

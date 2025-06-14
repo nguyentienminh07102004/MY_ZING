@@ -20,7 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,14 +34,9 @@ public class PlaylistServiceImpl implements IPlaylistService {
     @Override
     @Transactional
     public PlaylistResponse createPlaylist(PlaylistRequest playlistRequest) {
-        Set<SongEntity> songs = new HashSet<>();
-        playlistRequest.getSongs().forEach(songId -> {
-            SongEntity song = this.songService.getSongById(songId);
-            songs.add(song);
-        });
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = this.userService.getUserByEmail(email);
-        PlaylistEntity playlistEntity = new PlaylistEntity(playlistRequest, songs, user);
+        PlaylistEntity playlistEntity = new PlaylistEntity(playlistRequest, user);
         this.playlistRepository.save(playlistEntity);
         return this.playlistMapper.toResponse(playlistEntity);
     }
@@ -77,7 +71,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public PlaylistEntity getPlaylistById(String playlistId) {
         return this.playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new DataInvalidException(AppException.PLAYLIST_NOT_FOUND));
@@ -85,6 +79,13 @@ public class PlaylistServiceImpl implements IPlaylistService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PlaylistResponse getPlaylistResponseById(String id) {
+        return this.playlistMapper.toResponse(this.getPlaylistById(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PagedModel<PlaylistResponse> getAllPlaylistPublic(Integer page, Integer limit) {
         Pageable pageable = PaginationUtils.getPageRequest(page, limit);
         Page<PlaylistEntity> playlists = this.playlistRepository.findByCommunalIsTrue(pageable);

@@ -25,6 +25,8 @@ public enum AppException {
     EMAIL_EXIST(400, "Email Exist", HttpStatus.BAD_REQUEST),
 
     PASSWORD_CONFIRM_PASSWORD_NOT_MATCH(400, "Password Confirm Password Not Match", HttpStatus.BAD_REQUEST),
+    PASSWORD_OLD_PASSWORD_NOT_MATCH(400, "Password and Old Password Not Match", HttpStatus.BAD_REQUEST),
+    OLD_PASSWORD_NEW_PASSWORD_MATCH(400, "Old Password New Password Match", HttpStatus.BAD_REQUEST),
 
     PLAYLIST_NAME_NULL(400, "Playlist Name Null", HttpStatus.BAD_REQUEST),
     PLAYLIST_NOT_FOUND(400, "Playlist Not Found", HttpStatus.BAD_REQUEST),

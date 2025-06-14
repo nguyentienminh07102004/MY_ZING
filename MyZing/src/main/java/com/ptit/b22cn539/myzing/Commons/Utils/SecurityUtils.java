@@ -42,4 +42,15 @@ public class SecurityUtils {
         }
         return true;
     }
+
+    public boolean isPlaylistPublicOrByOwner(String playlistId) {
+        PlaylistEntity playlist = this.playlistService.getPlaylistById(playlistId);
+        if (playlist.getCommunal()) return true;
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.userService.getUserByEmail(email);
+        if (user.getRole().equals(ROLE.ADMIN)) {
+            return true;
+        }
+        return playlist.getUser().equals(user);
+    }
 }

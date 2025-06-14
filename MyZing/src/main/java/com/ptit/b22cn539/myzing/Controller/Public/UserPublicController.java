@@ -1,4 +1,4 @@
-package com.ptit.b22cn539.myzing.Controller;
+package com.ptit.b22cn539.myzing.Controller.Public;
 
 import com.ptit.b22cn539.myzing.DTO.Request.User.Oauth2GoogleRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserLoginRequest;
@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "users")
-public class UserController {
+@RequestMapping(value = "/public/users")
+public class UserPublicController {
     private final IUserService userService;
 
     @PostMapping(value = "login")

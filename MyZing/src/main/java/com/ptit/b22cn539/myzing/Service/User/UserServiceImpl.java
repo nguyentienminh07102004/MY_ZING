@@ -1,12 +1,15 @@
 package com.ptit.b22cn539.myzing.Service.User;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.ptit.b22cn539.myzing.DTO.Request.User.Oauth2GoogleRequest;
+import com.ptit.b22cn539.myzing.DTO.Request.User.UserChangePasswordRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserLoginRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserRegisterRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.User.JwtResponse;
 import com.ptit.b22cn539.myzing.DTO.Response.User.UserResponse;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
 import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
+import com.ptit.b22cn539.myzing.Models.Entity.JwtEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
 import com.ptit.b22cn539.myzing.Repository.IUserRepository;
 import com.ptit.b22cn539.myzing.Service.Jwt.IJwtService;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -24,6 +28,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -115,5 +120,35 @@ public class UserServiceImpl implements IUserService {
         this.userRepository.save(user);
         String token = this.jwtService.generateToken(user);
         return new JwtResponse(token);
+    }
+
+    @Override
+    @Transactional
+    public void logout(String token) {
+        JWTClaimsSet jwtClaimsSet = this.jwtService.getPayloadFromToken(token);
+        String jwtId = jwtClaimsSet.getJWTID();
+        Date expired = jwtClaimsSet.getExpirationTime();
+        String email = jwtClaimsSet.getSubject();
+        UserEntity user = this.getUserByEmail(email);
+        JwtEntity jwt = new JwtEntity(jwtId, expired, user);
+        this.jwtService.createJwt(jwt);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(UserChangePasswordRequest userChangePasswordRequest) {
+        if (!userChangePasswordRequest.getNewPassword().equals(userChangePasswordRequest.getConfirmPassword())) {
+            throw new DataInvalidException(AppException.PASSWORD_CONFIRM_PASSWORD_NOT_MATCH);
+        }
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.getUserByEmail(email);
+        if (!this.passwordEncoder.matches(userChangePasswordRequest.getOldPassword(), user.getPassword())) {
+            throw new DataInvalidException(AppException.PASSWORD_OLD_PASSWORD_NOT_MATCH);
+        }
+        if (this.passwordEncoder.matches(userChangePasswordRequest.getNewPassword(), user.getPassword())) {
+            throw new DataInvalidException(AppException.OLD_PASSWORD_NEW_PASSWORD_MATCH);
+        }
+        user.setPassword(this.passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
+        this.userRepository.save(user);
     }
 }

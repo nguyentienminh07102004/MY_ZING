@@ -2,6 +2,8 @@ package com.ptit.b22cn539.myzing.Service.Song;
 
 import com.ptit.b22cn539.myzing.Commons.Events.SongCreateUpdateEvent;
 import com.ptit.b22cn539.myzing.Commons.Events.SongDeleteEvent;
+import com.ptit.b22cn539.myzing.Commons.Mappers.SongMapper;
+import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongCreateRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongUpdateRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.Song.SongResponse;
@@ -19,11 +21,16 @@ import com.ptit.b22cn539.myzing.Service.User.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.util.List;
 import java.util.Set;
@@ -37,6 +44,7 @@ public class SongServiceImpl implements ISongService {
     private final ISingerService singerService;
     private final IAWSService awsService;
     private final IUserService userService;
+    private final SongMapper songMapper;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -49,19 +57,12 @@ public class SongServiceImpl implements ISongService {
         List<String> singerIds = request.getSingers();
         Set<SingerEntity> singers = this.singerService.findAll(singerIds);
         String fileKey = this.awsService.uploadFile(file);
-//        String fileKey = "link to file";
         request.setUrl(fileKey);
         SongEntity song = new SongEntity(request, singers);
         this.songRepository.save(song);
         SongCreateUpdateEvent event = new SongCreateUpdateEvent(List.of(song));
         this.applicationEventPublisher.publishEvent(event);
-        String url = this.awsService.getUrl(fileKey);
-//        String url = "link to file";
-        String imageUrl = request.getImageUrl();
-        if (StringUtils.hasText(request.getImageUrl())) {
-            imageUrl = this.awsService.getUrl(song.getImageUrl());
-        }
-        return new SongResponse(song, url, imageUrl);
+        return this.songMapper.toResponse(song);
     }
 
     @Override
@@ -77,21 +78,16 @@ public class SongServiceImpl implements ISongService {
         }
         Set<SingerEntity> singers = this.singerService.findAll(request.getSingers());
         this.awsService.deleteFile(song.getUrl());
-        String fileKey = request.getUrl();
+        String fileKey = song.getUrl();
         if (file != null && !file.isEmpty()) {
             fileKey = this.awsService.uploadFile(file);
-            request.setUrl(fileKey);
         }
+        request.setUrl(fileKey);
         song = new SongEntity(request, singers);
         this.songRepository.save(song);
         SongCreateUpdateEvent event = new SongCreateUpdateEvent(List.of(song));
         this.applicationEventPublisher.publishEvent(event);
-        String url = this.awsService.getUrl(fileKey);
-        String imageUrl = request.getImageUrl();
-        if (StringUtils.hasText(imageUrl)) {
-            imageUrl = this.awsService.getUrl(song.getImageUrl());
-        }
-        return new SongResponse(song, url, imageUrl);
+        return this.songMapper.toResponse(song);
     }
 
     @Override
@@ -127,5 +123,24 @@ public class SongServiceImpl implements ISongService {
         this.songRepository.deleteAllById(ids);
         SongDeleteEvent event = new SongDeleteEvent(ids);
         this.applicationEventPublisher.publishEvent(event);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedModel<SongResponse> getMySongFavourites(Integer page, Integer limit) {
+        Pageable pageable = PaginationUtils.getPageRequest(page, limit);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Page<UserSongFavouriteEntity> songFavourites = this.userFavouriteSongRepository.findByUser_Email(email, pageable);
+        Page<SongResponse> songResponses = songFavourites
+                .map(UserSongFavouriteEntity::getSong)
+                .map(this.songMapper::toResponse);
+        return new PagedModel<>(songResponses);
+    }
+
+    @Override
+    @Transactional
+    public ResponseInputStream<GetObjectResponse> downloadSong(String id) {
+        SongEntity song = this.getSongById(id);
+        return this.awsService.downloadFile(song.getUrl());
     }
 }

@@ -12,6 +12,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
 import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
+import com.ptit.b22cn539.myzing.Models.Entity.JwtEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
 import com.ptit.b22cn539.myzing.Repository.IJwtRepository;
 import lombok.RequiredArgsConstructor;
@@ -72,5 +73,11 @@ public class JwtServiceImpl implements IJwtService {
     @Override
     public boolean isExists(String id) {
         return this.jwtRepository.existsById(id);
+    }
+
+    @Override
+    @Transactional
+    public JwtEntity createJwt(JwtEntity jwtEntity) {
+        this.jwtRepository.save(jwtEntity);
     }
 }

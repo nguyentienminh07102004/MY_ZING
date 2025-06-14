@@ -7,4 +7,5 @@ import org.springframework.data.web.PagedModel;
 public interface ISongElasticsearchService {
     PagedModel<SongResponse> findSong(SongSearchRequest searchRequest);
     PagedModel<SongResponse> findMySong(SongSearchRequest searchRequest);
+    SongResponse findSongById(String id);
 }

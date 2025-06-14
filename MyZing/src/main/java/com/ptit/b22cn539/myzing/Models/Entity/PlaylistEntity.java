@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,9 +31,11 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @EntityListeners(value = AuditingEntityListener.class)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class PlaylistEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     private String id;
     private String name;
     @Column(columnDefinition = "TEXT")
@@ -53,10 +56,9 @@ public class PlaylistEntity {
     @Column(name = "isPublic")
     private Boolean communal = true;
 
-    public PlaylistEntity(PlaylistRequest playlistRequest, Set<SongEntity> songs, UserEntity user) {
+    public PlaylistEntity(PlaylistRequest playlistRequest, UserEntity user) {
         this.name = playlistRequest.getName();
         this.description = playlistRequest.getDescription();
-        this.songs = songs;
         this.user = user;
     }
 }
