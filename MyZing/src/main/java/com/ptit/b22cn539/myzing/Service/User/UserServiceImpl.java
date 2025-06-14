@@ -151,4 +151,12 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(this.passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
         this.userRepository.save(user);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getMyInfo() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.getUserByEmail(email);
+        return new UserResponse(user);
+    }
 }

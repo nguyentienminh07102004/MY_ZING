@@ -78,6 +78,6 @@ public class JwtServiceImpl implements IJwtService {
     @Override
     @Transactional
     public JwtEntity createJwt(JwtEntity jwtEntity) {
-        this.jwtRepository.save(jwtEntity);
+        return this.jwtRepository.save(jwtEntity);
     }
 }

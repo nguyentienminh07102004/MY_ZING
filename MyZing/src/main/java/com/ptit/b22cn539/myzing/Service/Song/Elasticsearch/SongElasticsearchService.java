@@ -28,6 +28,7 @@ import org.springframework.data.elasticsearch.core.query.DeleteQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,6 +47,7 @@ import java.util.Objects;
 @Slf4j
 public class SongElasticsearchService implements ISongElasticsearchService {
     private final ElasticsearchOperations elasticsearchOperations;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final SongMapper songMapper;
     private final HashOperations<String, String, Object> hashOperations;
 
@@ -73,17 +75,20 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public PagedModel<SongResponse> findSong(SongSearchRequest songSearchRequest) {
-        String key = this.getKey(songSearchRequest);
+        String key = this.getSearchKey(songSearchRequest);
         log.info("Find song elasticsearch {}", key);
-        if (this.hashOperations.hasKey(this.getKey(songSearchRequest), "list")) {
+        if (this.hashOperations.hasKey(this.getSearchKey(songSearchRequest), "list")) {
             log.info("Data redis");
-            List<SongResponse> songResponses = (List<SongResponse>) this.hashOperations.get(key, "list");
-            if (songResponses == null) {
+            Object data = this.hashOperations.get(key, "list");
+            if (data == null) {
                 throw new DataInvalidException(AppException.SERVER_ERROR);
             }
-            long totalElements = Long.parseLong(String.valueOf(this.hashOperations.get(key, "totalElements")));
-            Pageable pageable = PaginationUtils.getPageRequest(songSearchRequest.getPage(), songSearchRequest.getLimit());
-            return new PagedModel<>(new PageImpl<>(songResponses, pageable, totalElements));
+            if (data instanceof List<?>) {
+                List<SongResponse> songResponses = (List<SongResponse>) data;
+                long totalElements = Long.parseLong(String.valueOf(this.hashOperations.get(key, "totalElements")));
+                Pageable pageable = PaginationUtils.getPageRequest(songSearchRequest.getPage(), songSearchRequest.getLimit());
+                return new PagedModel<>(new PageImpl<>(songResponses, pageable, totalElements));
+            }
         }
         List<SortOptions> sortOptions = new LinkedList<>();
         sortOptions.add(SortOptions.of(builder -> builder.score(new ScoreSort.Builder().order(SortOrder.Desc).build())));
@@ -157,12 +162,24 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     @Override
     @Transactional(readOnly = true)
     public SongResponse findSongById(String id) {
+        String key = this.getKeyBySongId(id);
+        Object song = this.redisTemplate.opsForValue().get(key);
+        if (song != null) {
+            log.info("Song id = {} has in redis", id);
+            return (SongResponse) song;
+        }
         Query query = NativeQuery.builder()
                 .withQuery(q -> q.ids(IdsQuery.of(ids -> ids.values(id))))
                 .build();
         SearchHits<SongDocument> searchHits = this.elasticsearchOperations.search(query, SongDocument.class);
+        if (searchHits.isEmpty()) {
+            throw new DataInvalidException(AppException.SONG_NOT_FOUND);
+        }
         SongDocument songDocument = searchHits.getSearchHit(0).getContent();
-        return this.songMapper.toResponse(songDocument);
+        SongResponse songResponse = this.songMapper.toResponse(songDocument);
+        this.redisTemplate.opsForValue().set(key, songResponse);
+        log.info("Song id = {} has set into redis", id);
+        return songResponse;
     }
 
     @TransactionalEventListener
@@ -176,7 +193,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
                 .build(), SongDocument.class);
     }
 
-    public String getKey(SongSearchRequest songSearchRequest) {
+    private String getSearchKey(SongSearchRequest songSearchRequest) {
         Pageable pageable = PaginationUtils.getPageRequest(songSearchRequest.getPage(), songSearchRequest.getLimit());
         return "song:%s:%s:%s:%s:%s:%s:%d:%d".formatted(
                 Objects.toString(songSearchRequest.getName(), "_"),
@@ -188,5 +205,9 @@ public class SongElasticsearchService implements ISongElasticsearchService {
                 pageable.getPageNumber(),
                 pageable.getPageSize()
         );
+    }
+
+    private String getKeyBySongId(String songId) {
+        return "song:id-%s".formatted(songId);
     }
 }

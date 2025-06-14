@@ -15,4 +15,5 @@ public interface IUserService {
     JwtResponse loginGoogle(Oauth2GoogleRequest googleRequest);
     void logout(String token);
     void changePassword(UserChangePasswordRequest userChangePasswordRequest);
+    UserResponse getMyInfo();
 }

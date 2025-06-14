@@ -10,17 +10,12 @@ import com.ptit.b22cn539.myzing.Service.Singer.ISingerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Date;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -59,7 +54,7 @@ public class FakeDataController {
 
         for (int i = 0; i < 10000; i++) {
             Set<SingerEntity> singers = new HashSet<>();
-            for (int j = 0; j < 3; j++) {
+            for (int j = 0; j < 2; j++) {
                 singers.add(singerIds.get(faker.number().numberBetween(0, numberOfSingers - 1)));
             }
             SongEntity song = SongEntity.builder()
@@ -73,15 +68,5 @@ public class FakeDataController {
         SongCreateUpdateEvent event = new SongCreateUpdateEvent(songs);
         this.applicationEventPublisher.publishEvent(event);
         this.songRepository.saveAll(songs);
-    }
-
-    @Transactional
-    @PostMapping(value = "/synchro")
-    public void synchro(@RequestParam Integer page) {
-        log.info("Lần thứ {}", page);
-        Pageable pageable = PageRequest.of(page - 1, 100000);
-        Page<SongEntity> songs = this.songRepository.findAllByCreatedDateAfter(java.util.Date.from(Instant.parse("2025-06-08T04:00:55.110+07:00")), pageable);
-        SongCreateUpdateEvent event = new SongCreateUpdateEvent(songs.getContent());
-        this.applicationEventPublisher.publishEvent(event);
     }
 }

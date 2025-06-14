@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.sql.Date;
 
 @Getter
@@ -14,7 +15,7 @@ import java.sql.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SingerResponse {
+public class SingerResponse implements Serializable {
     private String id;
     private String fullName;
     private String avatar;

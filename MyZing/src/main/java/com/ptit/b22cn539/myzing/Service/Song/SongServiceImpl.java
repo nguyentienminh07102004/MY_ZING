@@ -56,7 +56,8 @@ public class SongServiceImpl implements ISongService {
         }
         List<String> singerIds = request.getSingers();
         Set<SingerEntity> singers = this.singerService.findAll(singerIds);
-        String fileKey = this.awsService.uploadFile(file);
+//        String fileKey = this.awsService.uploadFile(file);
+        String fileKey = "Link to file";
         request.setUrl(fileKey);
         SongEntity song = new SongEntity(request, singers);
         this.songRepository.save(song);
