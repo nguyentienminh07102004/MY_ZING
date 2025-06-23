@@ -1,4 +1,3 @@
-import FacebookIcon from '@mui/icons-material/Facebook';
 import GoogleIcon from '@mui/icons-material/Google';
 import {
   Box,
@@ -10,10 +9,11 @@ import {
   Typography
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { useState } from 'react';
-import { UserLoginService } from '../apis/UserService';
 import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { UserLoginService } from '../apis/UserService';
+import { instance } from '../apis/instance';
 
 const SocialButton = styled(IconButton)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
@@ -27,11 +27,27 @@ const SocialButton = styled(IconButton)(({ theme }) => ({
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams, _] = useSearchParams();
   
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code) {
+      const loginWithGoogle = async () => {
+        const res = await instance.post(`/public/users/login/google`, {
+          code,
+          redirectUri: "http://localhost:5173/login"
+        });
+        Cookies.set('token', res.data.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7) });
+        navigate('/');
+      }
+      loginWithGoogle();
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,8 +59,8 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res: string = await UserLoginService(formData.email, formData.password);
-    Cookies.set('token', res, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24) });
+    const res: {token: string} = await UserLoginService(formData.email, formData.password);
+    Cookies.set('token', res.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24) });
     navigate('/');
   };
 
@@ -230,16 +246,15 @@ const Login = () => {
           </Divider>
 
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <SocialButton sx={{ color: 'white' }}>
+            <SocialButton sx={{ color: 'white' }} onClick={() => {
+              window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=310493825026-ciu50vhe0li1jp8bc9l5h8ajvhdouin8.apps.googleusercontent.com&redirect_uri=http://localhost:5173/login&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent';
+            }}>
               <GoogleIcon />
-            </SocialButton>
-            <SocialButton sx={{ color: 'white' }}>
-              <FacebookIcon />
             </SocialButton>
           </Box>
 
           <Typography variant="body2" align="center" sx={{ mt: 2, color: 'rgba(255, 255, 255, 0.7)' }}>
-            Don't have an account?{' '}
+            Don't have an account?
             <Typography
               component="span"
               variant="body2"

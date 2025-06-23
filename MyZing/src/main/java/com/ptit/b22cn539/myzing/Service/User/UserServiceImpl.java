@@ -1,10 +1,12 @@
 package com.ptit.b22cn539.myzing.Service.User;
 
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.ptit.b22cn539.myzing.Commons.Mappers.UserMapper;
 import com.ptit.b22cn539.myzing.DTO.Request.User.Oauth2GoogleRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserChangePasswordRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserLoginRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserRegisterRequest;
+import com.ptit.b22cn539.myzing.DTO.Request.User.UserUpdateInfoRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.User.JwtResponse;
 import com.ptit.b22cn539.myzing.DTO.Response.User.UserResponse;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
@@ -12,6 +14,7 @@ import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
 import com.ptit.b22cn539.myzing.Models.Entity.JwtEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
 import com.ptit.b22cn539.myzing.Repository.IUserRepository;
+import com.ptit.b22cn539.myzing.Service.AWS.IAWSService;
 import com.ptit.b22cn539.myzing.Service.Jwt.IJwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.util.Map;
@@ -38,6 +43,8 @@ public class UserServiceImpl implements IUserService {
     private final IJwtService jwtService;
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IAWSService awsService;
+    private final UserMapper userMapper;
 
     @Value("${google_client_id}")
     private String clientId;
@@ -78,7 +85,7 @@ public class UserServiceImpl implements IUserService {
         UserEntity user = new UserEntity(userRegisterRequest);
         user.setPassword(this.passwordEncoder.encode(userRegisterRequest.getPassword()));
         this.userRepository.save(user);
-        return new UserResponse(user);
+        return this.userMapper.toResponse(user);
     }
 
     @Override
@@ -157,6 +164,34 @@ public class UserServiceImpl implements IUserService {
     public UserResponse getMyInfo() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = this.getUserByEmail(email);
-        return new UserResponse(user);
+        return this.userMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public void uploadAvatar(MultipartFile file) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.getUserByEmail(email);
+        if (StringUtils.hasText(user.getPicture()) && !user.getPicture().contains("https")) {
+            // có avatar nhưng không phải ảnh lấy từ google
+            this.awsService.deleteFile(user.getPicture());
+        }
+        String avatar = this.awsService.uploadFile(file);
+        user.setPicture(avatar);
+        this.userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void updateInfo(UserUpdateInfoRequest userUpdateInfoRequest) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.getUserByEmail(email);
+        user.setFirstName(userUpdateInfoRequest.getFirstName());
+        user.setLastName(userUpdateInfoRequest.getLastName());
+        user.setAddress(userUpdateInfoRequest.getAddress());
+        user.setDateOfBirth(userUpdateInfoRequest.getDateOfBirth());
+        user.setGender(userUpdateInfoRequest.getGender());
+        user.setPhone(userUpdateInfoRequest.getPhone());
+        this.userRepository.save(user);
     }
 }

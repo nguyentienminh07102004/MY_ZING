@@ -30,4 +30,5 @@ public class SongUpdateRequest {
     @NotNull
     private Long numberOfListens;
     private String url;
+    private List<String> tags;
 }

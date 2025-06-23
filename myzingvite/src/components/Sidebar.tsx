@@ -1,18 +1,19 @@
-import { Box, List, ListItem, ListItemIcon, ListItemText, Divider, Typography } from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
-import ExploreIcon from '@mui/icons-material/Explore';
-import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
-import StarIcon from '@mui/icons-material/Star';
-import HistoryIcon from '@mui/icons-material/History';
 import AlbumIcon from '@mui/icons-material/Album';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import HistoryIcon from '@mui/icons-material/History';
+import HomeIcon from '@mui/icons-material/Home';
+import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
+import StarIcon from '@mui/icons-material/Star';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { Box, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const mainMenuItems = [
-  { text: 'Khám Phá', icon: <HomeIcon /> },
-  { text: '#zingchart', icon: <ExploreIcon /> },
-  { text: 'Thư Viện', icon: <LibraryMusicIcon /> },
+  { text: 'Khám Phá', icon: <HomeIcon />, path: '/' },
+  { text: 'Thư Viện', icon: <LibraryMusicIcon />, path: '/main' },
+  { text: 'Đã Tải Lên', icon: <CloudUploadIcon />, path: '/uploaded' },
 ];
 
 const libraryItems = [
@@ -28,6 +29,8 @@ const playlistItems = [
 ];
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+
   return (
     <Box
       sx={{
@@ -58,6 +61,7 @@ const Sidebar = () => {
             <ListItem
               key={item.text}
               component="div"
+              onClick={() => navigate(item.path)}
               sx={{
                 borderRadius: 1,
                 mx: 1,
@@ -78,7 +82,7 @@ const Sidebar = () => {
         <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: 'text.secondary' }}>
           THƯ VIỆN
         </Typography>
-        <List>
+        <List component="nav">
           {libraryItems.map((item) => (
             <ListItem
               key={item.text}
@@ -103,45 +107,27 @@ const Sidebar = () => {
         <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: 'text.secondary' }}>
           PLAYLIST
         </Typography>
-        <Box sx={{ 
-          flex: 1, 
-          overflowY: 'auto',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: 'transparent',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          },
-        }}>
-          <List>
-            {playlistItems.map((item) => (
-              <ListItem
-                key={item.text}
-                component="div"
-                sx={{
-                  borderRadius: 1,
-                  mx: 1,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
+        <List component="nav">
+          {playlistItems.map((item) => (
+            <ListItem
+              key={item.text}
+              component="div"
+              sx={{
+                borderRadius: 1,
+                mx: 1,
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItem>
+          ))}
+        </List>
       </Box>
     </Box>
   );

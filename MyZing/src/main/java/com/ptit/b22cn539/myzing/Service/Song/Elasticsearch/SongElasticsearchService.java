@@ -6,8 +6,7 @@ import co.elastic.clients.elasticsearch._types.ScoreSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.IdsQuery;
-import com.ptit.b22cn539.myzing.Commons.Events.SongCreateUpdateEvent;
-import com.ptit.b22cn539.myzing.Commons.Events.SongDeleteEvent;
+import com.ptit.b22cn539.myzing.Commons.EnvProperties.KafkaEnvProperties;
 import com.ptit.b22cn539.myzing.Commons.Mappers.SongMapper;
 import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongSearchRequest;
@@ -15,7 +14,6 @@ import com.ptit.b22cn539.myzing.DTO.Response.Song.SongResponse;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
 import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
 import com.ptit.b22cn539.myzing.Models.Elasticsearch.SongDocument;
-import com.ptit.b22cn539.myzing.Models.Entity.SongEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageImpl;
@@ -30,11 +28,10 @@ import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PagedModel;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -51,18 +48,15 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     private final SongMapper songMapper;
     private final HashOperations<String, String, Object> hashOperations;
 
-    @TransactionalEventListener
-    @Async(value = "taskExecutor")
-    @SuppressWarnings("unchecked")
-    public void createSong(SongCreateUpdateEvent event) {
-        List<SongEntity> songs = (List<SongEntity>) event.getSource();
+    @Transactional
+    @KafkaListener(topics = KafkaEnvProperties.CREATE_UPDATE_TOPIC, groupId = "createUpdateSong", concurrency = "5")
+    public void createSong(List<SongDocument> songs) {
         List<IndexQuery> indexQueries = new LinkedList<>();
-        for (SongEntity song : songs) {
-            SongDocument songDocument = new SongDocument(song);
+        for (SongDocument song : songs) {
             IndexQuery indexQuery = IndexQuery.builder()
                     .withId(song.getId())
                     .withOpType(IndexQuery.OpType.INDEX)
-                    .withObject(songDocument)
+                    .withObject(song)
                     .build();
             indexQueries.add(indexQuery);
             log.info("Create document {}", song.getId());
@@ -77,7 +71,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     public PagedModel<SongResponse> findSong(SongSearchRequest songSearchRequest) {
         String key = this.getSearchKey(songSearchRequest);
         log.info("Find song elasticsearch {}", key);
-        if (this.hashOperations.hasKey(this.getSearchKey(songSearchRequest), "list")) {
+        if (this.redisTemplate.hasKey(this.getSearchKey(songSearchRequest))) {
             log.info("Data redis");
             Object data = this.hashOperations.get(key, "list");
             if (data == null) {
@@ -162,7 +156,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     @Override
     @Transactional(readOnly = true)
     public SongResponse findSongById(String id) {
-        String key = this.getKeyBySongId(id);
+        String key = getKeyBySongId(id);
         Object song = this.redisTemplate.opsForValue().get(key);
         if (song != null) {
             log.info("Song id = {} has in redis", id);
@@ -182,11 +176,8 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         return songResponse;
     }
 
-    @TransactionalEventListener
-    @Async(value = "taskExecutor")
-    @SuppressWarnings("unchecked")
-    public void deleteSong(SongDeleteEvent songDeleteEvent) {
-        List<String> ids = (List<String>) songDeleteEvent.getSource();
+    @KafkaListener(topics = KafkaEnvProperties.DELETE_TOPIC, groupId = "deleteTopic", concurrency = "5")
+    public void deleteSong(List<String> ids) {
         this.elasticsearchOperations.delete(DeleteQuery.builder(NativeQuery.builder()
                         .withQuery(builder -> builder.ids(id -> id.values(ids)))
                         .build())
@@ -207,7 +198,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         );
     }
 
-    private String getKeyBySongId(String songId) {
-        return "song:id-%s".formatted(songId);
+    public static String getKeyBySongId(String songId) {
+        return "song:id-%s-email-%s".formatted(songId, SecurityContextHolder.getContext().getAuthentication().getName());
     }
 }

@@ -1,3 +1,5 @@
+import type { SingerResponse } from "./Singer";
+
 export interface SongResponse {
     id: string;
     name: string;
@@ -7,5 +9,6 @@ export interface SongResponse {
     createdDate: string;
     numberOfLikes: number;
     numberOfListens: number;
-    singers: string[];
+    isLike: boolean;
+    singers: SingerResponse[];
 }

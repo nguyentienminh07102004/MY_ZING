@@ -1,6 +1,6 @@
-package com.ptit.b22cn539.myzing.DTO.Response.User;
+package com.ptit.b22cn539.myzing.DTO.Request.User;
 
-import com.ptit.b22cn539.myzing.Commons.Enums.ROLE;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,15 +14,12 @@ import java.sql.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserResponse {
-    private String id;
+public class UserUpdateInfoRequest {
     private String firstName;
     private String lastName;
-    private String email;
+    @Pattern(regexp = "^(84|0)([35789])[0-9]{8}$")
     private String phone;
     private String address;
     private Date dateOfBirth;
     private String gender;
-    private String picture;
-    private ROLE role;
 }

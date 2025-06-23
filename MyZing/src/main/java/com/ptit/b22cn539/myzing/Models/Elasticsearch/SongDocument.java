@@ -2,6 +2,7 @@ package com.ptit.b22cn539.myzing.Models.Elasticsearch;
 
 import com.ptit.b22cn539.myzing.Models.Entity.SingerEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.SongEntity;
+import com.ptit.b22cn539.myzing.Models.Entity.TagEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,8 +49,12 @@ public class SongDocument {
         this.description = song.getDescription();
         this.imageUrl = song.getImageUrl();
         this.createdDate = song.getCreatedDate();
+        this.email = song.getUser().getEmail();
         this.numberOfListens = song.getNumberOfListens();
         this.url = song.getUrl();
+        this.tags = song.getTags().stream()
+                .map(TagEntity::getName)
+                .toList();
         this.singerIds = song.getSingers().stream()
                 .map(SingerEntity::getId)
                 .toList();

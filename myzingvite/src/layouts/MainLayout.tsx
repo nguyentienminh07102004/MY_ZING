@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Player from '../components/Player';
+import UploadButton from '../components/UploadButton';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             ml: '240px', // Sidebar width
             mb: '90px', // Player height
             overflow: 'auto',
+            width: "100%",
             bgcolor: 'background.default',
           }}
         >
@@ -29,6 +31,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </Box>
       </Box>
       <Player />
+      <UploadButton />
     </Box>
   );
 };

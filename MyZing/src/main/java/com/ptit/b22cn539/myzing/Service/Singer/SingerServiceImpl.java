@@ -1,5 +1,6 @@
 package com.ptit.b22cn539.myzing.Service.Singer;
 
+import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
 import com.ptit.b22cn539.myzing.DTO.Request.Singer.SingerRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.Singer.SingerResponse;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
@@ -8,6 +9,9 @@ import com.ptit.b22cn539.myzing.Models.Entity.SingerEntity;
 import com.ptit.b22cn539.myzing.Repository.ISingerRepository;
 import com.ptit.b22cn539.myzing.Service.AWS.IAWSService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,5 +55,14 @@ public class SingerServiceImpl implements ISingerService {
     @Override
     public List<SingerEntity> findAll() {
         return this.singerRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public PagedModel<SingerResponse> getAllSingers(Integer page, Integer limit) {
+        Pageable pageable = PaginationUtils.getPageRequest(page, limit);
+        Page<SingerEntity> pageEntities = this.singerRepository.findAll(pageable);
+        Page<SingerResponse> pageResponses = pageEntities.map(SingerResponse::new);
+        return new PagedModel<>(pageResponses);
     }
 }

@@ -1,15 +1,19 @@
 package com.ptit.b22cn539.myzing.Fake;
 
 import com.github.javafaker.Faker;
-import com.ptit.b22cn539.myzing.Commons.Events.SongCreateUpdateEvent;
+import com.ptit.b22cn539.myzing.Commons.EnvProperties.KafkaEnvProperties;
 import com.ptit.b22cn539.myzing.DTO.Request.Singer.SingerRequest;
+import com.ptit.b22cn539.myzing.Models.Elasticsearch.SongDocument;
 import com.ptit.b22cn539.myzing.Models.Entity.SingerEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.SongEntity;
+import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
 import com.ptit.b22cn539.myzing.Repository.ISongRepository;
 import com.ptit.b22cn539.myzing.Service.Singer.ISingerService;
+import com.ptit.b22cn539.myzing.Service.User.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +32,8 @@ import java.util.Set;
 public class FakeDataController {
     private final ISingerService singerService;
     private final ISongRepository songRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final IUserService userService;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @PostMapping(value = "singer")
     @Transactional
@@ -51,8 +56,8 @@ public class FakeDataController {
         List<SingerEntity> singerIds = this.singerService.findAll();
         int numberOfSingers = singerIds.size();
         List<SongEntity> songs = new ArrayList<>();
-
-        for (int i = 0; i < 10000; i++) {
+        UserEntity user = this.userService.getUserByEmail(SecurityContextHolder.getContext().getAuthentication().getName());
+        for (int i = 0; i < 10; i++) {
             Set<SingerEntity> singers = new HashSet<>();
             for (int j = 0; j < 2; j++) {
                 singers.add(singerIds.get(faker.number().numberBetween(0, numberOfSingers - 1)));
@@ -62,11 +67,14 @@ public class FakeDataController {
                     .url(faker.book().genre())
                     .description(faker.lorem().paragraph())
                     .singers(singers)
+                    .user(user)
                     .build();
             songs.add(song);
         }
-        SongCreateUpdateEvent event = new SongCreateUpdateEvent(songs);
-        this.applicationEventPublisher.publishEvent(event);
         this.songRepository.saveAll(songs);
+        for (SongEntity song : songs) {
+            SongDocument songDocument = new SongDocument(song);
+            this.kafkaTemplate.send(KafkaEnvProperties.CREATE_UPDATE_TOPIC, songDocument);
+        }
     }
 }

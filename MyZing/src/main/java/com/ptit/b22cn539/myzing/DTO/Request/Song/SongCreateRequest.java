@@ -27,6 +27,7 @@ public class SongCreateRequest {
     private String name;
     @NotListEmpty
     private List<String> singers;
+    private List<String> tags;
     private String description;
     private String imageUrl;
     private String url;

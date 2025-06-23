@@ -32,6 +32,8 @@ public enum AppException {
     PLAYLIST_NOT_FOUND(400, "Playlist Not Found", HttpStatus.BAD_REQUEST),
 
     FORBIDDEN(403, "Forbidden", HttpStatus.FORBIDDEN),
+
+    TAG_NOT_FOUND(400, "Tag Not Found", HttpStatus.BAD_REQUEST),
     ;
     private final Integer status;
     private final String message;

@@ -2,6 +2,7 @@ package com.ptit.b22cn539.myzing.Models.Entity;
 
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongCreateRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongUpdateRequest;
+import com.ptit.b22cn539.myzing.Service.Song.Redis.SongRedisService;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
