@@ -1,29 +1,27 @@
-import { useState, useRef, useEffect } from 'react';
-import {
-  Box,
-  IconButton,
-  Typography,
-  Slider,
-  Stack,
-  Avatar,
-  Select,
-  MenuItem,
-} from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import ShuffleIcon from '@mui/icons-material/Shuffle';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import DownloadIcon from '@mui/icons-material/Download';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { instance } from '../apis/instance';
+import PauseIcon from '@mui/icons-material/Pause';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import RepeatIcon from '@mui/icons-material/Repeat';
+import ShuffleIcon from '@mui/icons-material/Shuffle';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import {
+  Avatar,
+  Box,
+  IconButton,
+  MenuItem,
+  Select,
+  Slider,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { getSongById, incrementNumberOfListner, likeSongService } from '../apis/SongService';
 import type { SongResponse } from '../types/Song';
-import Cookies from 'js-cookie';
 
 const Player = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -34,10 +32,9 @@ const Player = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isRepeat, setIsRepeat] = useState<boolean>(false);
-  const [searchParams, _] = useSearchParams();
   const [playbackRate, setPlaybackRate] = useState(1);
-  const token = Cookies.get('token');
-  const navigate = useNavigate();
+  const [songId, setSongId] = useState('');
+  const [isLike, setIsLike] = useState<boolean>(false);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -45,33 +42,34 @@ const Player = () => {
     }
   }, [volume]);
 
-  useEffect(() => {
-    setIsPlaying(false);
-    setCurrentTime(0);
-  }, [song?.id])
-
   const likeSong = async () => {
-    await instance.post(`/auth/songs/favourites/${song?.id}`, null, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    navigate(0);
+    await likeSongService(song?.id as string);
+    setIsLike(!isLike);
   }
 
   useEffect(() => {
-    const songId = searchParams.get('songId');
-    if (!songId) return;
     const fetchData = async () => {
-      const res: SongResponse = (await instance.get(`/public/songs/${songId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })).data;
+      const res: SongResponse = await getSongById(songId);
       setSong(res);
+      setIsLike(res.isLike);
+      setIsPlaying(false);
+      setCurrentTime(0);
+      handleProgressChange(null, 0);
     }
     fetchData();
-  }, [searchParams.get('songId')]);
+  }, [songId]);
+
+  useEffect(() => {
+    const id = localStorage.getItem('songId') as string;
+    setSongId(id);
+    const handleStorageChange = () => {
+      const id = localStorage.getItem('songId') as string;
+      setSongId(id);
+    };
+    window.addEventListener('songIdChange', handleStorageChange);
+    return () => window.removeEventListener('songIdChange', handleStorageChange);
+  }, []);
+
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.playbackRate = playbackRate;
@@ -89,7 +87,7 @@ const Player = () => {
     }
   };
 
-  const handleProgressChange = (_: Event, newValue: number | number[]) => {
+  const handleProgressChange = (_: Event | null, newValue: number | number[]) => {
     if (audioRef.current && typeof newValue === 'number') {
       const time = (newValue * duration) / 100;
       audioRef.current.currentTime = time;
@@ -120,6 +118,11 @@ const Player = () => {
       setDuration(audioRef.current.duration);
     }
   };
+
+  const handleEnded = async () => {
+    if (!isRepeat) setIsPlaying(false);
+    await incrementNumberOfListner(songId as string);
+  }
 
   const handleRepeat = () => {
     if (audioRef.current) {
@@ -153,7 +156,7 @@ const Player = () => {
         loop={isRepeat}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={handleEnded}
       />
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: 300 }}>
@@ -206,10 +209,7 @@ const Player = () => {
         </Box>
         <Stack direction="row" spacing={1}>
           <IconButton size="small" onClick={() => likeSong()}>
-            {song?.isLike ? <FavoriteIcon color='error' /> : <FavoriteBorderIcon />}
-          </IconButton>
-          <IconButton size="small">
-            <MoreHorizIcon fontSize="small" />
+            {isLike ? <FavoriteIcon color='error' /> : <FavoriteBorderIcon />}
           </IconButton>
         </Stack>
       </Box>
@@ -324,6 +324,9 @@ const Player = () => {
           <MenuItem value={1.5}>1.5x</MenuItem>
           <MenuItem value={2}>2x</MenuItem>
         </Select>
+        <IconButton size="small" onClick={() => song?.id ? window.open(`${import.meta.env.VITE_SERVER_HOST}/public/songs/download/${localStorage.getItem('songId')}`) : {}}>
+          <DownloadIcon fontSize="small" />
+        </IconButton>
         <IconButton>
           <QueueMusicIcon />
         </IconButton>

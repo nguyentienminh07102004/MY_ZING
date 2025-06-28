@@ -1,12 +1,16 @@
-import { Box, Typography, Card, CardContent, CardMedia } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
+import Cookies from 'js-cookie';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { instance } from '../apis/instance';
 import type { SongResponse } from '../types/Song';
 
 const SongCard = ({ name, imageUrl, singers, id }: SongResponse) => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const token = Cookies.get('token');
+  if (!token) {
+    navigate('/login');
+  }
 
   return (
     <Card
@@ -31,15 +35,16 @@ const SongCard = ({ name, imageUrl, singers, id }: SongResponse) => {
         alt={name}
         sx={{ objectFit: 'cover' }}
         onClick={() => {
-          searchParams.set('songId', id);
-          setSearchParams(searchParams);
-          navigate(`?${searchParams.toString()}`);
+          localStorage.setItem('songId', id);
+          const evt = new CustomEvent('songIdChange');
+          window.dispatchEvent(evt);
+          navigate(`/song/${id}`);
         }}
       />
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          sx={{
             mb: 1,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -48,8 +53,8 @@ const SongCard = ({ name, imageUrl, singers, id }: SongResponse) => {
         >
           {name}
         </Typography>
-        <Typography 
-          variant="body2" 
+        <Typography
+          variant="body2"
           color="text.secondary"
           sx={{
             overflow: 'hidden',
@@ -68,22 +73,26 @@ const Uploaded = () => {
   const [songs, setSongs] = useState<SongResponse[]>([]);
 
   useEffect(() => {
+    const token = Cookies.get('token');
     const fetchData = async () => {
-      const response = await instance.get('/public/songs/uploaded');
+      const response = await instance.get('/auth/songs/my-song', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setSongs(response.data.content);
     }
     fetchData();
   }, []);
-
   return (
     <Box>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
         Bài Hát Đã Tải Lên
       </Typography>
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
+      <Box sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
         gap: 3,
         justifyContent: 'space-between'
       }}>

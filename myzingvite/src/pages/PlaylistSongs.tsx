@@ -1,21 +1,21 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { Avatar, Box, Button, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Paper, Typography } from '@mui/material';
-import Cookies from 'js-cookie';
+import type { AxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { instance } from '../apis/instance';
+import { useNavigate, useParams } from 'react-router-dom';
+import { addSongToPlaylist, getPlaylistById, removeSongFromPlaylistService, likePlaylistService } from '../apis/PlaylistService';
+import { getAllSongs, likeSongService } from '../apis/SongService';
 import type { PlaylistResponse } from '../types/Playlist';
 import type { SongResponse } from '../types/Song';
 
 const PlaylistSongs = () => {
   const { id } = useParams();
-  const [_, setSearchParams] = useSearchParams();
   const [playlist, setPlaylist] = useState<PlaylistResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -28,41 +28,30 @@ const PlaylistSongs = () => {
   const [loadingSongs, setLoadingSongs] = useState(false);
   const scrollableRef = useRef<HTMLDivElement>(null);
   const [reload, setReload] = useState(false);
-  const token = Cookies.get('token');
 
   useEffect(() => {
+    if (!id) return;
     const fetchPlaylist = async () => {
-      const token = Cookies.get('token');
       try {
-        const response = await instance.get('/public/playlists/' + id, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = response.data;
+        const data = await getPlaylistById(id as string);
         setPlaylist(data);
+        console.log(data)
       } catch (error) {
         console.error('Error fetching playlist:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPlaylist();
   }, [id, reload]);
 
   const handlePlaySong = (song: SongResponse) => {
-    setSearchParams({ songId: song.id });
+    localStorage.setItem('songId', song.id);
   };
 
   const handleToggleLike = async (songId: string) => {
-    const token = Cookies.get('token');
     try {
-      await instance.post(`/auth/songs/favourites/${songId}`, null, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      await likeSongService(songId);
       navigate(0);
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -71,8 +60,8 @@ const PlaylistSongs = () => {
 
   const fetchAllSongs = async (page = 1, append = false) => {
     setLoadingSongs(true);
-    const res = await instance.get('/public/songs', { params: { page: page, limit: 10 } });
-    const newSongs = res.data.content || [];
+    const res = await getAllSongs(page, 10);
+    const newSongs = res.content || [];
     setAllSongs(prev => append ? [...prev, ...newSongs] : newSongs);
     setHasMoreSongs(newSongs.length > 0);
     setLoadingSongs(false);
@@ -94,12 +83,10 @@ const PlaylistSongs = () => {
     if (!id || selectedSongIds.length === 0) return;
     setAdding(true);
     try {
-      await instance.put(`/auth/playlists/playlist/${id}/songs/${selectedSongIds.join(', ')}`, null, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await addSongToPlaylist(id, selectedSongIds);
       handleCloseAddSong();
     } catch (e) {
-      alert('Thêm bài hát thất bại!');
+      alert((e as AxiosError).message);
     } finally {
       setAdding(false);
       setReload(!reload);
@@ -119,12 +106,20 @@ const PlaylistSongs = () => {
   const handleRemoveSong = async (songId: string) => {
     if (!id) return;
     try {
-      await instance.delete(`/auth/playlists/playlist/${id}/songs/${songId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await removeSongFromPlaylistService(id, [songId]);
       setReload(!reload);
     } catch (e) {
       alert('Xoá bài hát thất bại!');
+    }
+  };
+
+  const handleTogglePlaylistLike = async () => {
+    if (!id || !playlist) return;
+    try {
+      await likePlaylistService(id);
+      navigate(0);
+    } catch (error) {
+      console.error('Error toggling playlist like:', error);
     }
   };
 
@@ -153,7 +148,7 @@ const PlaylistSongs = () => {
       </Box>
     );
   }
-
+  console.log(playlist)
   return (
     <Box sx={{
       background: 'linear-gradient(180deg, rgba(23,15,35,1) 0%, rgba(16,12,24,1) 100%)',
@@ -217,6 +212,18 @@ const PlaylistSongs = () => {
               </Typography>
               <IconButton onClick={handleOpenAddSong} size="small" sx={{ color: 'white' }}>
                 <AddIcon />
+              </IconButton>
+              <IconButton 
+                onClick={() => handleTogglePlaylistLike()} 
+                size="small" 
+                sx={{ 
+                  color: playlist.liked ? '#ff6b6b' : 'white',
+                  '&:hover': {
+                    color: playlist.liked ? '#ff5252' : '#ff6b6b'
+                  }
+                }}
+              >
+                {playlist.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
               </IconButton>
             </Box>
             <Typography
@@ -394,7 +401,7 @@ const PlaylistSongs = () => {
                     }}
                     sx={{
                       '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.1)'
+                        bgcolor: 'rgba(255, 255, 255, 0.1)'
                       }
                     }}
                   >

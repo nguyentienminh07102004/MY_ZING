@@ -42,4 +42,10 @@ public class PlaylistAuthenticationController {
         PlaylistResponse playlist = this.playlistService.removeSongFromPlaylist(playlistId, songIds);
         return new ResponseEntity<>(playlist, HttpStatus.OK);
     }
+
+    @PostMapping(value = "/favourites/{playlistId}")
+    public ResponseEntity<Void> likePlaylist(@PathVariable String playlistId) {
+        this.playlistService.likePlaylist(playlistId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

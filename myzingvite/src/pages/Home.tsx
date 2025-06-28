@@ -1,6 +1,6 @@
-import { Box, Card, CardContent, CardMedia, Grid, Typography, Pagination } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, Grid, Pagination, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { instance } from '../apis/instance';
 import type { PlaylistResponse } from '../types/Playlist';
 import type { SongResponse } from '../types/Song';
@@ -8,7 +8,6 @@ import type { SongResponse } from '../types/Song';
 const Home = () => {
   const [playlists, setPlaylists] = useState<PlaylistResponse[]>([]);
   const [songs, setSongs] = useState<SongResponse[]>([]);
-  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [playlistPage, setPlaylistPage] = useState(1);
   const [playlistTotalPages, setPlaylistTotalPages] = useState(1);
@@ -48,8 +47,14 @@ const Home = () => {
     </Card>
   );
 
-  const SongCard = ({ name, imageUrl, singers }: SongResponse) => (
+  const SongCard = ({ id, name, imageUrl, singers }: SongResponse) => (
     <Card
+      onClick={() => {
+        localStorage.setItem('songId', id);
+        const evt = new CustomEvent('songIdChange');
+        window.dispatchEvent(evt);
+        navigate(`/song/${id}`);
+      }}
       sx={{
         bgcolor: 'background.paper',
         borderRadius: 2,
@@ -140,44 +145,43 @@ const Home = () => {
           shape="rounded"
         />
       </Box>
+      {songs.length > 0 && <>
+        <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: 'bold' }}>
+          Bài hát hay
+        </Typography>
 
-      <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: 'bold' }}>
-        Mới Phát Hành
-      </Typography>
+        <Box sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 3,
+          width: "100%",
+          justifyContent: 'flex-start',
+        }}>
+          {songs?.map((song, index) => (
+            <Box key={index} sx={{
+              width: '300px',
+              height: '350px',
+              flexShrink: 0
+            }}
+            >
+              <SongCard {...song} />
+            </Box>
+          ))}
+        </Box>
 
-      <Box sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 3,
-        width: "100%",
-        justifyContent: 'flex-start',
-      }}>
-        {songs?.map((song, index) => (
-          <Box key={index} sx={{
-            width: '300px',
-            height: '350px',
-            flexShrink: 0
-          }}
-            onClick={() => {
-              searchParams.set('songId', song.id);
-              setSearchParams(searchParams);
-              navigate(`?${searchParams.toString()}`);
-            }}>
-            <SongCard {...song} />
-          </Box>
-        ))}
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Pagination
-          count={songTotalPages}
-          page={songPage}
-          onChange={(_, value) => setSongPage(value)}
-          color="primary"
-          shape="rounded"
-        />
-      </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Pagination
+            count={songTotalPages}
+            page={songPage}
+            onChange={(_, value) => setSongPage(value)}
+            color="primary"
+            shape="rounded"
+          />
+        </Box>
+      </>
+      }
     </Box>
+
   );
 };
 

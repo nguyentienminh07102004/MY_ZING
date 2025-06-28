@@ -8,5 +8,6 @@ export interface PlaylistResponse {
     createdDate: Date;
     email: string;
     isCommunal: boolean;
+    liked: boolean;
     songs: SongResponse[];
 }

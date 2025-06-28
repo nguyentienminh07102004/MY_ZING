@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -20,11 +21,15 @@ import lombok.Setter;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -55,6 +60,11 @@ public class PlaylistEntity {
     @ColumnDefault(value = "true")
     @Column(name = "isPublic")
     private Boolean communal = true;
+
+    @OneToMany(mappedBy = "playlist", orphanRemoval = true)
+    @Cascade(value = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<UserFavouritePlaylistEntity> userFavouritePlaylists = new LinkedList<>();
 
     public PlaylistEntity(PlaylistRequest playlistRequest, UserEntity user) {
         this.name = playlistRequest.getName();

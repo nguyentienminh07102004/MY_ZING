@@ -20,6 +20,7 @@ public enum AppException {
     TOKEN_INVALID(400, "Token Invalid", HttpStatus.BAD_REQUEST),
 
     USER_NOT_FOUND(400, "User Not Found", HttpStatus.BAD_REQUEST),
+    USER_LOCK(400, "User Locked", HttpStatus.BAD_REQUEST),
 
     EMAIL_OR_PASSWORD_ERROR(400, "Email Or Password Error", HttpStatus.BAD_REQUEST),
     EMAIL_EXIST(400, "Email Exist", HttpStatus.BAD_REQUEST),

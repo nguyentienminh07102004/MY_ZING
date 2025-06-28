@@ -23,5 +23,6 @@ public class PlaylistResponse {
     private Date createdDate;
     private String email;
     private boolean isCommunal;
+    private boolean isLiked;
     private List<SongResponse> songs;
 }

@@ -14,6 +14,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UserLoginService } from '../apis/UserService';
 import { instance } from '../apis/instance';
+import type { AxiosError } from 'axios';
+import type { APIResponse } from '../types/PagedModel';
 
 const SocialButton = styled(IconButton)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
@@ -28,22 +30,27 @@ const SocialButton = styled(IconButton)(({ theme }) => ({
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams, _] = useSearchParams();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
   useEffect(() => {
+
     const code = searchParams.get('code');
     if (code) {
       const loginWithGoogle = async () => {
-        const res = await instance.post(`/public/users/login/google`, {
-          code,
-          redirectUri: "http://localhost:5173/login"
-        });
-        Cookies.set('token', res.data.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7) });
-        navigate('/');
+        try {
+          const res = await instance.post(`/public/users/login/google`, {
+            code,
+            redirectUri: "http://localhost:5173/login"
+          });
+          Cookies.set('token', res.data.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7) });
+          navigate('/')
+        } catch (e) {
+          alert(((e as AxiosError).response?.data as APIResponse)?.message)
+        }
       }
       loginWithGoogle();
     }
@@ -59,9 +66,13 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res: {token: string} = await UserLoginService(formData.email, formData.password);
-    Cookies.set('token', res.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24) });
-    navigate('/');
+    try {
+      const res: { token: string } = await UserLoginService(formData.email, formData.password);
+      Cookies.set('token', res.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24) });
+      navigate('/');
+    } catch(e) {
+      alert(((e as AxiosError).response?.data as APIResponse)?.message);
+    }
   };
 
   return (
@@ -234,7 +245,7 @@ const Login = () => {
             Sign In
           </Button>
 
-          <Divider sx={{ 
+          <Divider sx={{
             my: 3,
             '&::before, &::after': {
               borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -258,6 +269,7 @@ const Login = () => {
             <Typography
               component="span"
               variant="body2"
+              onClick={() => navigate('/register')}
               sx={{
                 color: 'primary.main',
                 cursor: 'pointer',

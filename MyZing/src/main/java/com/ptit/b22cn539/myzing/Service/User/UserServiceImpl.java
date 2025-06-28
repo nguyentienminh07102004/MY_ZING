@@ -67,6 +67,9 @@ public class UserServiceImpl implements IUserService {
         if (!this.passwordEncoder.matches(userLoginRequest.getPassword(), user.getPassword())) {
             throw new DataInvalidException(AppException.EMAIL_OR_PASSWORD_ERROR);
         }
+        if (user.isDeleted()) {
+            throw new DataInvalidException(AppException.USER_LOCK);
+        }
         String token = this.jwtService.generateToken(user);
         return new JwtResponse(token);
     }
@@ -122,6 +125,9 @@ public class UserServiceImpl implements IUserService {
         String email = res.get("email").toString();
         if (this.userRepository.existsByEmail(email)) {
             UserEntity user = this.getUserByEmail(email);
+            if (user.isDeleted()) {
+                throw new DataInvalidException(AppException.USER_LOCK);
+            }
             String token = this.jwtService.generateToken(user);
             return new JwtResponse(token);
         }

@@ -7,3 +7,9 @@ export interface PagedModel<T> {
         totalPages: number;
     }
 }
+
+export interface APIResponse {
+    status: number;
+    message: string;
+    data: any;
+}

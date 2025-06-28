@@ -6,11 +6,18 @@ import Login from './pages/Login';
 import PlaylistSongs from './pages/PlaylistSongs';
 import Uploaded from './pages/Uploaded';
 import Profile from './pages/Profile';
+import SongDetail from './pages/SongDetail';
+import Register from './pages/Register';
+import AdminUsers from './pages/AdminUsers';
 
 export const routes: RouteObject[] = [
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />
   },
   {
     path: '/',
@@ -35,6 +42,14 @@ export const routes: RouteObject[] = [
       {
         path: '/profile',
         element: <Profile />,
+      },
+      {
+        path: '/song/:id',
+        element: <SongDetail />,
+      },
+      {
+        path: '/admin/users',
+        element: <AdminUsers />,
       },
     ],
   },

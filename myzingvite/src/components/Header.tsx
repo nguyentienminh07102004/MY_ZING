@@ -1,32 +1,32 @@
-import {
-  AppBar,
-  Box,
-  IconButton,
-  Toolbar,
-  Avatar,
-  Button,
-  Modal,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Stack,
-  Typography,
-  Menu
-} from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import SettingsIcon from '@mui/icons-material/Settings';
 import SearchIcon from '@mui/icons-material/Search';
-import { useEffect, useState } from 'react';
+import SettingsIcon from '@mui/icons-material/Settings';
+import type { SelectChangeEvent } from '@mui/material';
+import {
+  AppBar,
+  Avatar,
+  Box,
+  Button,
+  FormControl,
+  IconButton,
+  InputLabel,
+  Menu,
+  MenuItem,
+  Modal,
+  Select,
+  Stack,
+  TextField,
+  Toolbar,
+  Typography
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { useNavigate } from 'react-router-dom';
-import { instance } from '../apis/instance';
 import Cookies from 'js-cookie';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getMyInfo, logout } from '../apis/UserService';
 
 const Header = () => {
   const [openSearchModal, setOpenSearchModal] = useState(false);
@@ -40,8 +40,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
-  const [avatar, setAvatar] = useState(null);
-  const token = Cookies.get('token');
+  const [avatar, setAvatar] = useState<string | null>(null);
 
   const handleOpenSearchModal = () => setOpenSearchModal(true);
   const handleCloseSearchModal = () => setOpenSearchModal(false);
@@ -72,20 +71,21 @@ const Header = () => {
     navigate('/profile');
     handleMenuClose();
   };
-  const handleLogout = () => {
-    Cookies.remove('token');
-    navigate('/login');
-    handleMenuClose();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      Cookies.remove('token');
+    } catch { }
+    finally {
+      navigate('/login');
+      handleMenuClose();
+    }
   };
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const res = await instance.get('/auth/users/my-info', {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      setAvatar(res.data.picture);
+      const user = await getMyInfo();
+      setAvatar(user.picture);
     }
     fetchProfile();
   }, []);

@@ -9,7 +9,9 @@ import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
 import com.ptit.b22cn539.myzing.Models.Entity.PlaylistEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.SongEntity;
 import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
+import com.ptit.b22cn539.myzing.Models.Entity.UserFavouritePlaylistEntity;
 import com.ptit.b22cn539.myzing.Repository.IPlaylistRepository;
+import com.ptit.b22cn539.myzing.Repository.IUserFavouritePlaylistRepository;
 import com.ptit.b22cn539.myzing.Service.Song.ISongService;
 import com.ptit.b22cn539.myzing.Service.User.IUserService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
     private final IUserService userService;
     private final IPlaylistRepository playlistRepository;
     private final PlaylistMapper playlistMapper;
+    private final IUserFavouritePlaylistRepository userFavouritePlaylistRepository;
 
     @Override
     @Transactional
@@ -91,5 +94,20 @@ public class PlaylistServiceImpl implements IPlaylistService {
         Pageable pageable = PaginationUtils.getPageRequest(page, limit);
         Page<PlaylistEntity> playlists = this.playlistRepository.findByCommunalIsTrue(pageable);
         return new PagedModel<>(playlists.map(this.playlistMapper::toResponse));
+    }
+
+    @Override
+    @Transactional
+    public void likePlaylist(String playlistId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!this.userFavouritePlaylistRepository.existsByPlaylist_IdAndUser_Email(playlistId, email)) {
+            PlaylistEntity playlist = this.getPlaylistById(playlistId);
+            UserEntity user = this.userService.getUserByEmail(email);
+            UserFavouritePlaylistEntity userFavouritePlaylist = new UserFavouritePlaylistEntity(playlist, user);
+            playlist.getUserFavouritePlaylists().add(userFavouritePlaylist);
+            this.playlistRepository.save(playlist);
+        } else {
+            this.userFavouritePlaylistRepository.deleteByPlaylist_IdAndUser_Email(playlistId, email);
+        }
     }
 }

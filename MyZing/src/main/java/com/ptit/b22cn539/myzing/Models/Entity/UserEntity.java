@@ -20,8 +20,11 @@ import lombok.Setter;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.sql.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 @Entity
@@ -54,7 +57,13 @@ public class UserEntity {
 
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     @Cascade(value = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<UserSongFavouriteEntity> songFavourites;
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<UserSongFavouriteEntity> songFavourites = new LinkedList<>();
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    @Cascade(value = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<UserFavouritePlaylistEntity> userFavouritePlaylist = new LinkedList<>();
 
     public UserEntity(UserRegisterRequest userRegisterRequest) {
         this.firstName = userRegisterRequest.getFirstName();
