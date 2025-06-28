@@ -44,7 +44,7 @@ public class JwtServiceImpl implements IJwtService {
             JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                     .subject(user.getEmail())
                     .expirationTime(Date.from(new Date(System.currentTimeMillis()).toInstant().plusSeconds(this.accessTokenDuration)))
-                    .claim("scope", "ROLE_" + user.getRole().toString())
+                    .claim("scope", user.getRole().toString())
                     .jwtID(jwtID)
                     .build();
             Payload payload = new Payload(jwtClaimsSet.toJSONObject());

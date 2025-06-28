@@ -48,6 +48,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         Set<SongEntity> songs = playlist.getSongs();
         songIds.forEach(songId -> {
             SongEntity song = this.songService.getSongById(songId);
+            song.getPlaylists().add(playlist);
             songs.add(song);
         });
         playlist.setSongs(songs);

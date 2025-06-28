@@ -90,9 +90,9 @@ public class SongServiceImpl implements ISongService {
             request.setImageUrl(imageUrl);
         }
         Set<SingerEntity> singers = this.singerService.findAll(request.getSingers());
-        this.awsService.deleteFile(song.getUrl());
         String fileKey = song.getUrl();
         if (file != null && !file.isEmpty()) {
+            this.awsService.deleteFile(song.getUrl());
             fileKey = this.awsService.uploadFile(file);
         }
         request.setUrl(fileKey);
@@ -141,6 +141,11 @@ public class SongServiceImpl implements ISongService {
     @Transactional
     public void deleteSong(List<String> ids) {
         for (String id : ids) {
+            SongEntity song = this.getSongById(id);
+            this.awsService.deleteFile(song.getUrl());
+            if (StringUtils.hasText(song.getImageUrl())) {
+                this.awsService.deleteFile(song.getImageUrl());
+            }
             this.songRepository.deleteById(id);
             this.kafkaTemplate.send(KafkaEnvProperties.DELETE_TOPIC, id);
         }
@@ -163,5 +168,14 @@ public class SongServiceImpl implements ISongService {
     public ResponseInputStream<GetObjectResponse> downloadSong(String id) {
         SongEntity song = this.getSongById(id);
         return this.awsService.downloadFile(song.getUrl());
+    }
+
+    @Override
+    @Transactional
+    public void incrementNumberOfListener(String songId) {
+        SongEntity song = this.getSongById(songId);
+        song.setNumberOfListens(song.getNumberOfListens() + 1);
+        this.songRepository.save(song);
+        this.kafkaTemplate.send(KafkaEnvProperties.CREATE_UPDATE_TOPIC, new SongDocument(song));
     }
 }

@@ -2,7 +2,6 @@ package com.ptit.b22cn539.myzing.Models.Entity;
 
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongCreateRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.Song.SongUpdateRequest;
-import com.ptit.b22cn539.myzing.Service.Song.Redis.SongRedisService;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -63,21 +62,24 @@ public class SongEntity {
     private UserEntity user;
     @ManyToMany
     @JoinTable(name = "singer_music",
-    joinColumns = @JoinColumn(name = "songId"),
-    inverseJoinColumns = @JoinColumn(name = "singerId"))
+            joinColumns = @JoinColumn(name = "songId"),
+            inverseJoinColumns = @JoinColumn(name = "singerId"))
     private Set<SingerEntity> singers;
 
     @OneToMany(mappedBy = "song", orphanRemoval = true)
     @Cascade(value = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
     private List<UserSongFavouriteEntity> userSongFavourites;
 
-    @ManyToMany(mappedBy = "songs")
+    @ManyToMany
+    @JoinTable(name = "playlist_songs",
+            joinColumns = @JoinColumn(name = "songId"),
+            inverseJoinColumns = @JoinColumn(name = "playlistId"))
     private List<PlaylistEntity> playlists;
 
     @ManyToMany
     @JoinTable(name = "song_tags",
-    joinColumns = @JoinColumn(name = "songId"),
-    inverseJoinColumns = @JoinColumn(name = "tagName"))
+            joinColumns = @JoinColumn(name = "songId"),
+            inverseJoinColumns = @JoinColumn(name = "tagName"))
     private Set<TagEntity> tags;
 
     public SongEntity(SongCreateRequest songRequest) {

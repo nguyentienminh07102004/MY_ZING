@@ -1,0 +1,34 @@
+name: elasticsearch
+services:
+    elasticsearch:
+        image: elasticsearch:8.18.2
+        restart: always
+        container_name: elasticsearch
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+        environment:
+            xpack.security.enabled: false
+            discovery.type: single-node
+            ES_JAVA_OPTS: -Xms512m -Xmx512m
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.18.2
+        container_name: kibana
+        environment:
+            ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+        ports:
+            - "5601:5601"
+        depends_on:
+            - elasticsearch
+#    | Biến môi trường                        | Ý nghĩa                                                                                                                             |
+#    | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+#    | `discovery.type`                       | Dùng để thiết lập chế độ phát hiện node trong cluster. Gía trị `single-node` là phổ biến khi chạy một node đơn (dành cho dev/test). |
+#    | `ES_JAVA_OPTS`                         | Cấu hình JVM cho Elasticsearch (ví dụ `-Xms512m -Xmx512m` để đặt heap size).                                                        |
+#    | `cluster.name`                         | Đặt tên cho cluster Elasticsearch. Các node cùng cluster sẽ kết nối với nhau.                                                       |
+#    | `node.name`                            | Tên của node hiện tại. Mặc định là random.                                                                                          |
+#    | `network.host`                         | Địa chỉ IP mà Elasticsearch sẽ bind để nhận kết nối (ví dụ: `0.0.0.0` để lắng nghe mọi địa chỉ IP).                                 |
+#    | `http.port`                            | Cổng HTTP để truy cập Elasticsearch (mặc định: `9200`).                                                                             |
+#    | `transport.port`                       | Cổng nội bộ mà các node Elasticsearch dùng để nói chuyện với nhau (mặc định: `9300`).                                               |
+#    | `bootstrap.memory_lock`                | Nếu đặt `true`, ngăn Elasticsearch swap RAM ra ổ cứng (giúp hiệu năng cao hơn).                                                     |
+#    | `xpack.security.enabled`               | Bật/tắt tính năng bảo mật (cần license). Đặt `false` để tắt authentication (chỉ nên dùng dev).                                      |
+#    | `xpack.security.transport.ssl.enabled` | Bật SSL cho giao tiếp giữa các node (mặc định `false` trong bản Basic).                                                             |

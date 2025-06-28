@@ -1,5 +1,6 @@
 package com.ptit.b22cn539.myzing;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +15,8 @@ import java.util.concurrent.Executor;
 @EnableAsync
 @EnableScheduling
 @EnableJpaAuditing
+@RequiredArgsConstructor
 public class MyZingApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(MyZingApplication.class, args);
     }

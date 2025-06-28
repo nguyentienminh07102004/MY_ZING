@@ -22,6 +22,7 @@ public class UserMapper {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .dateOfBirth(user.getDateOfBirth())
+                .isDeleted(user.isDeleted())
                 .build();
         if (StringUtils.hasText(user.getPicture()) && !user.getPicture().contains("https")) {
             String avatarUrl = this.awsService.getUrl(user.getPicture());

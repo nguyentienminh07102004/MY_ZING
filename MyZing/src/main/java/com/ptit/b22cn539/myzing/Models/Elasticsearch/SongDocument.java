@@ -16,13 +16,13 @@ import java.util.Date;
 import java.util.List;
 
 @Document(indexName = "songs")
-//@Setting(settingPath = "elasticsearch/song-setting.json", )
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SongDocument {
     @Id
+    @Field(type = FieldType.Keyword)
     private String id;
     @Field(type = FieldType.Text)//analyzer = "vietnamese_ngram_analyzer", searchAnalyzer = "vietnamese_search_analyzer"
     private String name;
@@ -52,9 +52,11 @@ public class SongDocument {
         this.email = song.getUser().getEmail();
         this.numberOfListens = song.getNumberOfListens();
         this.url = song.getUrl();
-        this.tags = song.getTags().stream()
-                .map(TagEntity::getName)
-                .toList();
+        if (song.getTags() != null) {
+            this.tags = song.getTags().stream()
+                    .map(TagEntity::getName)
+                    .toList();
+        }
         this.singerIds = song.getSingers().stream()
                 .map(SingerEntity::getId)
                 .toList();

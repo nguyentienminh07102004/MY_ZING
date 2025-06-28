@@ -2,11 +2,13 @@ package com.ptit.b22cn539.myzing.Service.User;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.ptit.b22cn539.myzing.Commons.Mappers.UserMapper;
+import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
 import com.ptit.b22cn539.myzing.DTO.Request.User.Oauth2GoogleRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserChangePasswordRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserLoginRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserRegisterRequest;
 import com.ptit.b22cn539.myzing.DTO.Request.User.UserUpdateInfoRequest;
+import com.ptit.b22cn539.myzing.DTO.Request.User.UserUpdateRole;
 import com.ptit.b22cn539.myzing.DTO.Response.User.JwtResponse;
 import com.ptit.b22cn539.myzing.DTO.Response.User.UserResponse;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
@@ -18,9 +20,12 @@ import com.ptit.b22cn539.myzing.Service.AWS.IAWSService;
 import com.ptit.b22cn539.myzing.Service.Jwt.IJwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -192,6 +197,33 @@ public class UserServiceImpl implements IUserService {
         user.setDateOfBirth(userUpdateInfoRequest.getDateOfBirth());
         user.setGender(userUpdateInfoRequest.getGender());
         user.setPhone(userUpdateInfoRequest.getPhone());
+        this.userRepository.save(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public PagedModel<UserResponse> getAllUsers(Integer page, Integer limit) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Page<UserEntity> users = this.userRepository.findAllByEmailIsNot(email, PaginationUtils.getPageRequest(page, limit));
+        return new PagedModel<>(users.map(this.userMapper::toResponse));
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void updateRoleUser(UserUpdateRole userUpdateRole) {
+        UserEntity user = this.getUserByEmail(userUpdateRole.getEmail());
+        user.setRole(userUpdateRole.getRole());
+        this.userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteUser(String email) {
+        UserEntity user = this.getUserByEmail(email);
+        user.setDeleted(!user.isDeleted());
         this.userRepository.save(user);
     }
 }

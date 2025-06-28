@@ -15,12 +15,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/public/songs")
@@ -73,5 +76,17 @@ public class SongPublicController {
                 }
             }
         }
+    }
+
+    @PutMapping(value = "/increment/song/{songId}")
+    public ResponseEntity<Void> incrementNumberOfListener(@PathVariable String songId) {
+        this.songService.incrementNumberOfListener(songId);
+        return ResponseEntity.status(200).build();
+    }
+
+    @GetMapping(value = "/related/{songId}")
+    public ResponseEntity<List<SongResponse>> getRelatedSong(@PathVariable String songId, @RequestParam(required = false) Integer limit) {
+        List<SongResponse> res = this.songElasticsearchService.findRelatedSong(songId, limit);
+        return ResponseEntity.status(200).body(res);
     }
 }

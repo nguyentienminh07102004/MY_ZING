@@ -23,6 +23,7 @@ public enum AppException {
 
     EMAIL_OR_PASSWORD_ERROR(400, "Email Or Password Error", HttpStatus.BAD_REQUEST),
     EMAIL_EXIST(400, "Email Exist", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_VALID(400, "Email Not Valid", HttpStatus.BAD_REQUEST),
 
     PASSWORD_CONFIRM_PASSWORD_NOT_MATCH(400, "Password Confirm Password Not Match", HttpStatus.BAD_REQUEST),
     PASSWORD_OLD_PASSWORD_NOT_MATCH(400, "Password and Old Password Not Match", HttpStatus.BAD_REQUEST),
@@ -34,6 +35,8 @@ public enum AppException {
     FORBIDDEN(403, "Forbidden", HttpStatus.FORBIDDEN),
 
     TAG_NOT_FOUND(400, "Tag Not Found", HttpStatus.BAD_REQUEST),
+
+    UNAUTHENTICATED(401, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     ;
     private final Integer status;
     private final String message;

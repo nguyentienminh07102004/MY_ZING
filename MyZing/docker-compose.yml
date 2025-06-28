@@ -1,33 +1,92 @@
 services:
+    postgres:
+        image: postgres:17.3
+        restart: always
+        container_name: myzing_postgres
+        environment:
+            POSTGRES_DB: MyZing
+            POSTGRES_PASSWORD: 123
+            POSTGRES_USER: postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
     elasticsearch:
         image: elasticsearch:8.18.2
         restart: always
-        container_name: elasticsearch
-        ports:
-            - "9200:9200"
-            - "9300:9300"
+        container_name: myzing_elasticsearch
         environment:
             xpack.security.enabled: false
             discovery.type: single-node
             ES_JAVA_OPTS: -Xms512m -Xmx512m
-    kibana:
-        image: docker.elastic.co/kibana/kibana:8.18.2
-        container_name: kibana
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data
+    redis:
+        image: redis:latest
+        restart: always
+        container_name: myzing_redis
         environment:
-            ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-        ports:
-            - "5601:5601"
+            REDIS_PASSWORD: 123
+        volumes:
+            - redis_data:/data
+    zookeeper:
+        image: confluentinc/cp-zookeeper:7.3.2
+        container_name: myzing_zookeeper
+        restart: always
+        environment:
+            ZOOKEEPER_CLIENT_PORT: 2181
+            ZOOKEEPER_TICK_TIME: 2000
+        volumes:
+            - zookeeper_data:/var/lib/zookeeper/data
+            - zookeeper_log:/var/lib/zookeeper/log
+    kafka:
+        image: confluentinc/cp-kafka:7.3.2
+        container_name: myzing_kafka
+        restart: always
+        environment:
+            KAFKA_BROKER_ID: 1
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+            KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
         depends_on:
+            -   zookeeper
+        volumes:
+            - kafka_data:/var/lib/kafka/data
+    backend:
+        image: nguyentienminh0710/myzing:0.0.2
+        container_name: myzing_be
+        env_file: ".env"
+        restart: always
+        environment:
+            REDIS_PASSWORD: 123
+            POSTGRES_HOST: postgres
+            REDIS_HOST: redis
+            KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+            ELASTICSEARCH_HOST: elasticsearch
+        depends_on:
+            - postgres
+            - redis
+            - kafka
+            - zookeeper
             - elasticsearch
-#    | Biến môi trường                        | Ý nghĩa                                                                                                                             |
-#    | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-#    | `discovery.type`                       | Dùng để thiết lập chế độ phát hiện node trong cluster. Gía trị `single-node` là phổ biến khi chạy một node đơn (dành cho dev/test). |
-#    | `ES_JAVA_OPTS`                         | Cấu hình JVM cho Elasticsearch (ví dụ `-Xms512m -Xmx512m` để đặt heap size).                                                        |
-#    | `cluster.name`                         | Đặt tên cho cluster Elasticsearch. Các node cùng cluster sẽ kết nối với nhau.                                                       |
-#    | `node.name`                            | Tên của node hiện tại. Mặc định là random.                                                                                          |
-#    | `network.host`                         | Địa chỉ IP mà Elasticsearch sẽ bind để nhận kết nối (ví dụ: `0.0.0.0` để lắng nghe mọi địa chỉ IP).                                 |
-#    | `http.port`                            | Cổng HTTP để truy cập Elasticsearch (mặc định: `9200`).                                                                             |
-#    | `transport.port`                       | Cổng nội bộ mà các node Elasticsearch dùng để nói chuyện với nhau (mặc định: `9300`).                                               |
-#    | `bootstrap.memory_lock`                | Nếu đặt `true`, ngăn Elasticsearch swap RAM ra ổ cứng (giúp hiệu năng cao hơn).                                                     |
-#    | `xpack.security.enabled`               | Bật/tắt tính năng bảo mật (cần license). Đặt `false` để tắt authentication (chỉ nên dùng dev).                                      |
-#    | `xpack.security.transport.ssl.enabled` | Bật SSL cho giao tiếp giữa các node (mặc định `false` trong bản Basic).                                                             |
+        ports:
+            - "8081:8081"
+#    frontend:
+#        build:
+#            context: "../myzingvite"
+#            dockerfile: Dockerfile
+#            args:
+#                VITE_SERVER_HOST: http://localhost:8081/api/v1
+#        restart: always
+#        container_name: myzing_fe
+#        depends_on:
+#            - backend
+#        ports:
+#            - "5173:5173"
+volumes:
+    postgres_data:
+    elasticsearch_data:
+    redis_data:
+    kafka_data:
+    zookeeper_data:
+    zookeeper_log:

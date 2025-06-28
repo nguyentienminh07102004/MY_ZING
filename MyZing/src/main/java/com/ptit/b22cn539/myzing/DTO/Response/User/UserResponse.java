@@ -25,4 +25,5 @@ public class UserResponse {
     private String gender;
     private String picture;
     private ROLE role;
+    private boolean isDeleted;
 }

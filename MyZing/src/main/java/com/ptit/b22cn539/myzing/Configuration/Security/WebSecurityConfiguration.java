@@ -1,8 +1,11 @@
 package com.ptit.b22cn539.myzing.Configuration.Security;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.ptit.b22cn539.myzing.Commons.Enums.ROLE;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
 import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
+import com.ptit.b22cn539.myzing.Models.Entity.UserEntity;
+import com.ptit.b22cn539.myzing.Repository.IUserRepository;
 import com.ptit.b22cn539.myzing.Service.Jwt.IJwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +45,7 @@ public class WebSecurityConfiguration {
     @Value("${server.servlet.context-path}")
     private String servletContextPath;
     private final IJwtService jwtService;
+    private final IUserRepository userRepository;
     private final HttpServletRequest httpServletRequest;
 
     @Bean
@@ -86,7 +90,8 @@ public class WebSecurityConfiguration {
             String contextPath = this.httpServletRequest.getRequestURI();
             log.info(contextPath);
             try {
-                String jwtID = this.jwtService.getPayloadFromToken(jwt).getJWTID();
+                JWTClaimsSet claimsSet = this.jwtService.getPayloadFromToken(jwt);
+                String jwtID = claimsSet.getJWTID();
                 if (this.jwtService.isExists(jwtID)) {
                     // logout
                     throw new DataInvalidException(AppException.TOKEN_INVALID);
@@ -94,6 +99,12 @@ public class WebSecurityConfiguration {
                 boolean isExpired = this.jwtService.getPayloadFromToken(jwt).getExpirationTime().before(new Date(System.currentTimeMillis()));
                 if (isExpired && contextPath.startsWith("%s/public".formatted(this.servletContextPath))) {
                     return Jwt.withTokenValue(jwt).build();
+                }
+                String email = claimsSet.getSubject();
+                UserEntity user = this.userRepository.findByEmail(email)
+                        .orElseThrow(() -> new DataInvalidException(AppException.USER_NOT_FOUND));
+                if (user.isDeleted()) {
+                    throw new DataInvalidException(AppException.UNAUTHENTICATED);
                 }
                 SecretKey secretKey = new SecretKeySpec(this.apiKey.getBytes(), MacAlgorithm.HS512.getName());
                 return NimbusJwtDecoder.withSecretKey(secretKey)

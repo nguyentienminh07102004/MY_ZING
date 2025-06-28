@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.sql.Date;
 import java.util.List;
@@ -47,6 +48,9 @@ public class UserEntity {
     private String picture;
     @Enumerated(value = EnumType.STRING)
     private ROLE role;
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private boolean isDeleted = false;
 
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     @Cascade(value = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})

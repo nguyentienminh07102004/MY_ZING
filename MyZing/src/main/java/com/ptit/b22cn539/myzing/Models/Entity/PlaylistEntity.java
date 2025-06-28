@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -18,11 +17,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
@@ -40,11 +42,9 @@ public class PlaylistEntity {
     private String name;
     @Column(columnDefinition = "TEXT")
     private String description;
-    @ManyToMany
-    @JoinTable(name = "playlist_songs",
-            joinColumns = @JoinColumn(name = "playlistId"),
-            inverseJoinColumns = @JoinColumn(name = "songId"))
-    private Set<SongEntity> songs;
+    @ManyToMany(mappedBy = "playlists")
+    @Cascade(value = {CascadeType.PERSIST, CascadeType.MERGE})
+    private Set<SongEntity> songs = new LinkedHashSet<>();
     @CreatedDate
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date createdDate;

@@ -92,6 +92,11 @@ public class SongElasticsearchService implements ISongElasticsearchService {
                             .field("%s.keyword".formatted(songSearchRequest.getSortBy()))
                             .order(songSearchRequest.getSortOrder()).build())
             ));
+        } else {
+            sortOptions.add(SortOptions.of(builder -> builder.field(new FieldSort.Builder()
+                    .field(songSearchRequest.getSortBy())
+                    .order(songSearchRequest.getSortOrder())
+                    .build())));
         }
         Pageable pageable = PaginationUtils.getPageRequest(songSearchRequest.getPage(), songSearchRequest.getLimit());
         log.info("request is {}", songSearchRequest);
@@ -176,6 +181,41 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         return songResponse;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<SongResponse> findRelatedSong(String songId, Integer limit) {
+        String key = getKeyRelatedSong(songId);
+        if (this.redisTemplate.hasKey(key)) {
+            Object data = this.redisTemplate.opsForValue().get(key);
+            return (List<SongResponse>) data;
+        }
+        SongDocument songDocument = this.elasticsearchOperations.get(songId, SongDocument.class);
+        if (songDocument == null) {
+            throw new DataInvalidException(AppException.SONG_NOT_FOUND);
+        }
+        List<String> singerIds = songDocument.getSingerIds();
+        NativeQuery query = NativeQuery.builder()
+                .withQuery(q -> q.bool(b -> b.should(s -> s.terms(
+                                terms -> terms
+                                        .terms(v -> v
+                                                .value(singerIds.stream()
+                                                        .map(FieldValue::of)
+                                                        .toList())
+                                        )
+                                        .field(SongDocument.SINGER_IDS)
+                        ))
+                        .mustNot(s -> s.ids(id -> id.values(songId)))))
+                .withPageable(PaginationUtils.getPageRequest(1, limit))
+                .build();
+        SearchHits<SongDocument> searchHits = this.elasticsearchOperations.search(query, SongDocument.class);
+        List<SongResponse> songResponses = searchHits.stream()
+                .map(SearchHit::getContent)
+                .map(this.songMapper::toResponse)
+                .toList();
+        this.redisTemplate.opsForValue().set(key, songResponses);
+        return songResponses;
+    }
+
     @KafkaListener(topics = KafkaEnvProperties.DELETE_TOPIC, groupId = "deleteTopic", concurrency = "5")
     public void deleteSong(List<String> ids) {
         this.elasticsearchOperations.delete(DeleteQuery.builder(NativeQuery.builder()
@@ -199,6 +239,10 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     }
 
     public static String getKeyBySongId(String songId) {
-        return "song:id-%s-email-%s".formatted(songId, SecurityContextHolder.getContext().getAuthentication().getName());
+        return "song:id:%s:email:%s".formatted(songId, SecurityContextHolder.getContext().getAuthentication().getName());
+    }
+
+    public static String getKeyRelatedSong(String songId) {
+        return "song:related:%s".formatted(songId);
     }
 }

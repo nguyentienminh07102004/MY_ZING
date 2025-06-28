@@ -19,4 +19,6 @@ public interface ISongService {
     void deleteSong(List<String> ids);
     PagedModel<SongResponse> getMySongFavourites(Integer page, Integer limit);
     ResponseInputStream<GetObjectResponse> downloadSong(String id);
+
+    void incrementNumberOfListener(String songId);
 }
