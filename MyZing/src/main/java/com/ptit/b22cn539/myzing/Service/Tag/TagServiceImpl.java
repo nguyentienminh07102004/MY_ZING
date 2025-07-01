@@ -1,6 +1,8 @@
 package com.ptit.b22cn539.myzing.Service.Tag;
 
 import com.ptit.b22cn539.myzing.Commons.Utils.PaginationUtils;
+import com.ptit.b22cn539.myzing.DTO.Request.Tag.TagCreateRequest;
+import com.ptit.b22cn539.myzing.DTO.Request.Tag.TagUpdateRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.Tag.TagResponse;
 import com.ptit.b22cn539.myzing.ExceptionHandler.AppException;
 import com.ptit.b22cn539.myzing.ExceptionHandler.DataInvalidException;
@@ -46,5 +48,31 @@ public class TagServiceImpl implements ITagService {
     public TagEntity getTagById(String id) {
         return this.tagRepository.findById(id)
                 .orElseThrow(() -> new DataInvalidException(AppException.TAG_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional
+    public TagResponse createTag(TagCreateRequest tagCreateRequest) {
+        TagEntity tag = new TagEntity(tagCreateRequest);
+        this.tagRepository.save(tag);
+        return new TagResponse(tag);
+    }
+
+    @Override
+    @Transactional
+    public TagResponse updateTag(TagUpdateRequest tagUpdateRequest) {
+        TagEntity tag = this.getTagById(tagUpdateRequest.getName());
+        tag.setDescription(tagUpdateRequest.getDescription());
+        this.tagRepository.save(tag);
+        return new TagResponse(tag);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTag(List<String> ids) {
+        for (String id : ids) {
+            TagEntity tag = this.getTagById(id);
+            this.tagRepository.delete(tag);
+        }
     }
 }

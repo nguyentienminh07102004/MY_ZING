@@ -89,8 +89,9 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         if (songSearchRequest.getSortBy().equalsIgnoreCase(SongDocument.NAME)) {
             sortOptions.add(SortOptions.of(builder -> builder
                     .field(new FieldSort.Builder()
-                            .field("%s.keyword".formatted(songSearchRequest.getSortBy()))
-                            .order(songSearchRequest.getSortOrder()).build())
+                            .field("name.keyword")
+                            .order(songSearchRequest.getSortOrder())
+                            .build())
             ));
         } else {
             sortOptions.add(SortOptions.of(builder -> builder.field(new FieldSort.Builder()
@@ -101,36 +102,33 @@ public class SongElasticsearchService implements ISongElasticsearchService {
         Pageable pageable = PaginationUtils.getPageRequest(songSearchRequest.getPage(), songSearchRequest.getLimit());
         log.info("request is {}", songSearchRequest);
         NativeQuery querySearch = NativeQuery.builder()
-                //.withSuggester(suggester)
                 .withQuery(query -> query
                         .bool(builder -> {
                             if (StringUtils.hasText(songSearchRequest.getName())) {
-                                builder = builder
-                                        .must(m1 -> m1.match(m -> m
-                                                .field(SongDocument.NAME)
-                                                .query(songSearchRequest.getName())
-                                                .fuzziness("AUTO")
-                                        ));
+                                builder.must(m1 -> m1.match(m -> m
+                                        .field(SongDocument.NAME)
+                                        .query(songSearchRequest.getName())
+                                        .fuzziness("AUTO")
+                                ));
                             }
                             if (songSearchRequest.getSingerIds() != null && !songSearchRequest.getSingerIds().isEmpty()) {
-                                builder = builder.must(m2 -> m2.terms(m -> m.field(SongDocument.SINGER_IDS)
+                                builder.must(m2 -> m2.terms(m -> m.field(SongDocument.SINGER_IDS)
                                         .terms(t -> t.value(songSearchRequest.getSingerIds().stream().map(FieldValue::of).toList()))));
                             }
                             if (songSearchRequest.getCreatedDateFrom() != null) {
-                                builder = builder.must(m3 -> m3.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE)
+                                builder.must(m3 -> m3.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE)
                                         .gte(songSearchRequest.getCreatedDateFrom().toInstant().toString()))));
                             }
                             if (songSearchRequest.getCreatedDateTo() != null) {
-                                builder = builder.must(m4 -> m4.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE)
+                                builder.must(m4 -> m4.range(r -> r.date(d -> d.field(SongDocument.CREATED_DATE)
                                         .lte(songSearchRequest.getCreatedDateTo().toInstant().toString()))));
                             }
                             if (StringUtils.hasText(songSearchRequest.getEmail())) {
-                                builder = builder
-                                        .must(m5 -> m5.matchPhrase(t -> t.field(SongDocument.EMAIL)
-                                                .query(songSearchRequest.getEmail())));
+                                builder.must(m5 -> m5.matchPhrase(t -> t.field(SongDocument.EMAIL)
+                                        .query(songSearchRequest.getEmail())));
                             }
                             if (!CollectionUtils.isEmpty(songSearchRequest.getTags())) {
-                                builder = builder.must(m -> m.terms(t -> t.field(SongDocument.TAGS)
+                                builder.must(m -> m.terms(t -> t.field(SongDocument.TAGS)
                                         .terms(v -> v.value(songSearchRequest.getTags().stream()
                                                 .map(FieldValue::of).toList()))));
                             }
@@ -183,6 +181,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
 
     @Override
     @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
     public List<SongResponse> findRelatedSong(String songId, Integer limit) {
         String key = getKeyRelatedSong(songId);
         if (this.redisTemplate.hasKey(key)) {

@@ -79,7 +79,7 @@ public class SongEntity {
     @ManyToMany
     @JoinTable(name = "song_tags",
             joinColumns = @JoinColumn(name = "songId"),
-            inverseJoinColumns = @JoinColumn(name = "tagName"))
+            inverseJoinColumns = @JoinColumn(name = "tagId"))
     private Set<TagEntity> tags;
 
     public SongEntity(SongCreateRequest songRequest) {

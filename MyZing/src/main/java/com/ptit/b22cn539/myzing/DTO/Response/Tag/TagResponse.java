@@ -13,10 +13,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class TagResponse {
+    private String id;
     private String name;
     private String description;
 
     public TagResponse(TagEntity tag) {
+        this.id = tag.getId();
         this.name = tag.getName();
         this.description = tag.getDescription();
     }
