@@ -1,13 +1,13 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SearchIcon from '@mui/icons-material/Search';
-import SettingsIcon from '@mui/icons-material/Settings';
 import type { SelectChangeEvent } from '@mui/material';
 import {
   AppBar,
   Avatar,
   Box,
   Button,
+  Chip,
   FormControl,
   IconButton,
   InputLabel,
@@ -25,8 +25,12 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Cookies from 'js-cookie';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getMyInfo, logout } from '../apis/UserService';
+import type { SingerResponse } from '../types/Singer';
+import { getAllSinger } from '../apis/SingerService';
+import type { TagResponse } from '../types/Tag';
+import { getAllTags } from '../apis/TagService';
 
 const Header = () => {
   const [openSearchModal, setOpenSearchModal] = useState(false);
@@ -35,15 +39,33 @@ const Header = () => {
   const [createDateFrom, setCreateDateFrom] = useState<Date | null>(null);
   const [createDateTo, setCreateDateTo] = useState<Date | null>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortBy, setSortBy] = useState<string>('createdDate');
+  const [sortOrder, setSortOrder] = useState<'Asc' | 'Desc'>('Desc');
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const pathName = useLocation().pathname;
+  const [singerList, setSingerList] = useState<SingerResponse[]>([]);
+  const [singerPage, setSingerPage] = useState(1);
+  const [singerHasMore, setSingerHasMore] = useState(true);
+  const [tagList, setTagList] = useState<TagResponse[]>([]);
+  const [tagPage, setTagPage] = useState(1);
+  const [tagHasMore, setTagHasMore] = useState(true);
 
   const handleOpenSearchModal = () => setOpenSearchModal(true);
-  const handleCloseSearchModal = () => setOpenSearchModal(false);
+  const handleCloseSearchModal = () => {
+    const params = new URLSearchParams();
+    if (searchName) params.set('name', searchName);
+    if (singerIds.length > 0) params.set('singerIds', singerIds.join(','));
+    if (createDateFrom) params.set('createDateFrom', createDateFrom.toISOString());
+    if (createDateTo) params.set('createDateTo', createDateTo.toISOString());
+    if (tags.length > 0) params.set('tags', tags.join(','));
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortOrder) params.set('sortOrder', sortOrder);
+    navigate(`${pathName}?${params.toString()}`);
+    setOpenSearchModal(false);
+  };
 
   const handleSingerIdsChange = (event: SelectChangeEvent<string[]>) => {
     setSingerIds(event.target.value as string[]);
@@ -53,12 +75,12 @@ const Header = () => {
     setTags(event.target.value as string[]);
   };
 
-  const handleSortByChange = (event: SelectChangeEvent) => {
+  const handleSortByChange = (event: SelectChangeEvent<string>) => {
     setSortBy(event.target.value);
   };
 
-  const handleSortOrderChange = (event: SelectChangeEvent) => {
-    setSortOrder(event.target.value);
+  const handleSortOrderChange = (event: SelectChangeEvent<string>) => {
+    setSortOrder(event.target.value as ('Asc' | 'Desc'));
   };
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -71,6 +93,23 @@ const Header = () => {
     navigate('/profile');
     handleMenuClose();
   };
+
+  const handleTagScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const {scrollHeight, scrollTop, clientHeight} = e.target as HTMLDivElement;
+    if (scrollHeight - 50 <= scrollTop + clientHeight && tagHasMore) {
+      setTagPage(tagPage + 1);
+    }
+  }
+
+  useEffect(() => {
+    const getTagList = async () => {
+      const res = await getAllTags(tagPage, 10);
+      setTagList(prev => [...prev, ...res.content]);
+      setTagHasMore(res.content.length > 0);
+    }
+    getTagList();
+  }, [tagPage]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -83,6 +122,17 @@ const Header = () => {
   };
 
   useEffect(() => {
+    const getSingers = async () => {
+      if (singerHasMore) {
+        const singers = await getAllSinger(singerPage, 10);
+        setSingerList(prev => [...prev, ...singers.content]);
+        setSingerHasMore(singers.page?.totalPages > 0);
+      }
+    }
+    getSingers();
+  }, [singerPage]);
+
+  useEffect(() => {
     const fetchProfile = async () => {
       const user = await getMyInfo();
       setAvatar(user.picture);
@@ -90,6 +140,13 @@ const Header = () => {
     fetchProfile();
   }, []);
 
+  const handleSingerScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const {scrollHeight, scrollTop, clientHeight} = e.target as HTMLDivElement;
+    console.log(scrollHeight <= scrollTop + clientHeight + 50, singerHasMore, singerList.length);
+    if (scrollHeight <= scrollTop + clientHeight + 50) {
+      setSingerPage(singerPage + 1);
+    }
+  }
   return (
     <>
       <AppBar
@@ -122,25 +179,7 @@ const Header = () => {
           >
             <SearchIcon />
           </IconButton>
-
           <Box sx={{ flexGrow: 1 }} />
-
-          <Button
-            variant="outlined"
-            color="primary"
-            size="small"
-            sx={{
-              borderRadius: 999,
-              textTransform: 'none',
-              px: 2,
-            }}
-          >
-            Nâng cấp VIP
-          </Button>
-
-          <IconButton color="primary">
-            <SettingsIcon />
-          </IconButton>
 
           <Avatar
             alt="User Avatar"
@@ -196,10 +235,23 @@ const Header = () => {
                   value={singerIds}
                   onChange={handleSingerIdsChange}
                   label="Ca sĩ"
+                  MenuProps={{
+                    slotProps: {
+                      paper: {
+                        onScroll: handleSingerScroll,
+                        style: {
+                          maxHeight: 300
+                        }
+                      },
+                    }
+                  }}
+                  renderValue={(value) => (<Box style={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Chip label={value} />
+                  </Box>)}
                 >
-                  <MenuItem value="1">Ca sĩ 1</MenuItem>
-                  <MenuItem value="2">Ca sĩ 2</MenuItem>
-                  <MenuItem value="3">Ca sĩ 3</MenuItem>
+                  {singerList.map(singer => (
+                    <MenuItem value={singer.id} key={singer.id}>{singer.fullName}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -229,10 +281,23 @@ const Header = () => {
                   value={tags}
                   onChange={handleTagsChange}
                   label="Tags"
+                  MenuProps={{
+                    slotProps: {
+                      paper: {
+                        style: {
+                          maxHeight: 300
+                        },
+                        onScroll: handleTagScroll
+                      },
+                    }
+                  }}
+                  renderValue={(value) => (
+                    <Chip label={value} />
+                  )}
                 >
-                  <MenuItem value="pop">Pop</MenuItem>
-                  <MenuItem value="rock">Rock</MenuItem>
-                  <MenuItem value="jazz">Jazz</MenuItem>
+                  {tagList.map(tag => (
+                    <MenuItem value={tag.id}>{tag.name}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth>
@@ -243,8 +308,8 @@ const Header = () => {
                   label="Sắp xếp theo"
                 >
                   <MenuItem value="name">Tên</MenuItem>
-                  <MenuItem value="date">Ngày tạo</MenuItem>
-                  <MenuItem value="views">Lượt xem</MenuItem>
+                  <MenuItem value="createdDate">Ngày tạo</MenuItem>
+                  <MenuItem value="numberOfListener">Lượt xem</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -257,8 +322,8 @@ const Header = () => {
                   onChange={handleSortOrderChange}
                   label="Thứ tự"
                 >
-                  <MenuItem value="asc">Tăng dần</MenuItem>
-                  <MenuItem value="desc">Giảm dần</MenuItem>
+                  <MenuItem value="Asc">Tăng dần</MenuItem>
+                  <MenuItem value="Desc">Giảm dần</MenuItem>
                 </Select>
               </FormControl>
               <Box sx={{ width: '100%' }} />

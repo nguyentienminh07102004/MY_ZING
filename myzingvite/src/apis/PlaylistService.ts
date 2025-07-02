@@ -40,3 +40,10 @@ export const likePlaylistService = async (playlistId: string) => {
     }
   });
 }
+
+export const getPublicPlaylists = async (page: number = 1, limit: number = 10) => {
+  const playlistsResponse = await instance.get('/public/playlists', {
+    params: { page, limit }
+  });
+  return playlistsResponse.data as PagedModel<PlaylistResponse>;
+}

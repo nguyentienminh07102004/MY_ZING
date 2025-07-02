@@ -148,7 +148,6 @@ const PlaylistSongs = () => {
       </Box>
     );
   }
-  console.log(playlist)
   return (
     <Box sx={{
       background: 'linear-gradient(180deg, rgba(23,15,35,1) 0%, rgba(16,12,24,1) 100%)',
@@ -242,7 +241,7 @@ const PlaylistSongs = () => {
                 mb: 3
               }}
             >
-              Created by: {playlist.email} • {playlist.songs.length} songs
+              Created by: {playlist.email} . {playlist.songs.length} songs
             </Typography>
           </Box>
         </Box>

@@ -49,12 +49,14 @@ const Player = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res: SongResponse = await getSongById(songId);
-      setSong(res);
-      setIsLike(res.isLike);
-      setIsPlaying(false);
-      setCurrentTime(0);
-      handleProgressChange(null, 0);
+      if (songId) {
+        const res: SongResponse = await getSongById(songId);
+        setSong(res);
+        setIsLike(res.isLike);
+        setIsPlaying(false);
+        setCurrentTime(0);
+        handleProgressChange(null, 0);
+      }
     }
     fetchData();
   }, [songId]);

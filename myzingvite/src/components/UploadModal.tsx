@@ -20,12 +20,13 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import Cookies from 'js-cookie';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useEffect, useState } from 'react';
-import { instance } from '../apis/instance';
+import { getAllSinger } from '../apis/SingerService';
+import { createdSong } from '../apis/SongService';
+import { getAllTags } from '../apis/TagService';
 import type { SingerResponse } from '../types/Singer';
 import type { TagResponse } from '../types/Tag';
-import CircularProgress from '@mui/material/CircularProgress';
 
 interface UploadModalProps {
   open: boolean;
@@ -45,7 +46,7 @@ const UploadModal = ({ open, onClose }: UploadModalProps) => {
     singers: false,
     audioFile: false
   });
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<TagResponse[]>([]);
   const [singers, setSingers] = useState<SingerResponse[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -53,18 +54,13 @@ const UploadModal = ({ open, onClose }: UploadModalProps) => {
   const [tagPage, setTagPage] = useState(1);
   const [hasMoreTags, setHasMoreTags] = useState(true);
   const [loadingTags, setLoadingTags] = useState(false);
-  const token = Cookies.get('token');
   const [uploading, setUploading] = useState(false);
 
   const fetchSingers = async (pageNum: number) => {
     try {
       setLoading(true);
-      const response = await instance.get('/public/singers', {
-        params: {
-          page: pageNum
-        }
-      });
-      const newSingers = response.data.content;
+      const response = await getAllSinger(pageNum);
+      const newSingers = response.content;
       setSingers(prev => pageNum === 1 ? newSingers : [...prev, ...newSingers]);
       setHasMore(newSingers.length > 0);
     } catch (error) {
@@ -77,14 +73,9 @@ const UploadModal = ({ open, onClose }: UploadModalProps) => {
   const fetchTags = async (pageNum: number) => {
     try {
       setLoadingTags(true);
-      const response = await instance.get('/public/tags', {
-        params: {
-          page: pageNum
-        }
-      });
-      const newTags: TagResponse[] = response.data.content;
-      const tagNames: string[] = newTags.map(tag => tag.name);
-      setTags(prev => pageNum === 1 ? tagNames : [...prev, ...tagNames]);
+      const response = await getAllTags(pageNum);
+      const newTags: TagResponse[] = response.content;
+      setTags(prev => pageNum === 1 ? newTags : [...prev, ...newTags]);
       setHasMoreTags(newTags.length > 0);
     } catch (error) {
       console.error('Error fetching tags:', error);
@@ -191,12 +182,7 @@ const UploadModal = ({ open, onClose }: UploadModalProps) => {
     if (audioFile) formData.append("file", audioFile);
     if (imageFile) formData.append("image", imageFile);
     try {
-      await instance.post('/auth/songs', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
-        },
-      });
+      await createdSong(formData);
       onClose();
       // Reset form
       setName('');
@@ -319,8 +305,8 @@ const UploadModal = ({ open, onClose }: UploadModalProps) => {
               )}
             >
               {tags.map((tag) => (
-                <MenuItem key={tag} value={tag}>
-                  {tag}
+                <MenuItem key={tag.id} value={tag.id}>
+                  {tag.name}
                 </MenuItem>
               ))}
               {loadingTags && (

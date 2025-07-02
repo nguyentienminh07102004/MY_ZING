@@ -1,7 +1,8 @@
 import { Box, Card, CardContent, CardMedia, Grid, Pagination, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { instance } from '../apis/instance';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getPublicPlaylists } from '../apis/PlaylistService';
+import { getAllSongs } from '../apis/SongService';
 import type { PlaylistResponse } from '../types/Playlist';
 import type { SongResponse } from '../types/Song';
 
@@ -13,6 +14,7 @@ const Home = () => {
   const [playlistTotalPages, setPlaylistTotalPages] = useState(1);
   const [songPage, setSongPage] = useState(1);
   const [songTotalPages, setSongTotalPages] = useState(1);
+  const [searchParams] = useSearchParams();
   const pageSize = 6;
 
   const PlaylistCard = ({ name, songs, image, id }: PlaylistResponse) => (
@@ -41,7 +43,7 @@ const Home = () => {
           {name}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {songs.length} bài hát
+          {songs?.length || 0} bài hát
         </Typography>
       </CardContent>
     </Card>
@@ -105,20 +107,15 @@ const Home = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const playlistsResponse = await instance.get('/public/playlists', {
-        params: { page: playlistPage - 1, limit: pageSize }
-      });
-      setPlaylists(playlistsResponse.data.content);
-      setPlaylistTotalPages(playlistsResponse.data.page?.totalPages || 1);
-
-      const songsResponse = await instance.get('/public/songs', {
-        params: { page: songPage - 1, limit: pageSize }
-      });
-      setSongs(songsResponse.data.content);
-      setSongTotalPages(songsResponse.data.page?.totalPages || 1);
+      const playlistsResponse = await getPublicPlaylists(playlistPage, pageSize);
+      setPlaylists(playlistsResponse.content);
+      setPlaylistTotalPages(playlistsResponse.page?.totalPages || 1);
+      const songsResponse = await getAllSongs(songPage, pageSize, Object.fromEntries(searchParams.entries()));
+      setSongs(songsResponse.content);
+      setSongTotalPages(songsResponse.page?.totalPages || 1);
     };
     fetchData();
-  }, [playlistPage, songPage]);
+  }, [playlistPage, songPage, searchParams]);
 
   return (
     <Box sx={{
@@ -145,7 +142,7 @@ const Home = () => {
           shape="rounded"
         />
       </Box>
-      {songs.length > 0 && <>
+      {songs?.length != null && songs?.length > 0 && <>
         <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: 'bold' }}>
           Bài hát hay
         </Typography>

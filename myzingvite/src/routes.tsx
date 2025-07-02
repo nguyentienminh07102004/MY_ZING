@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import SongDetail from './pages/SongDetail';
 import Register from './pages/Register';
 import AdminUsers from './pages/AdminUsers';
+import AdminTags from './pages/AdminTags';
 
 export const routes: RouteObject[] = [
   {
@@ -50,6 +51,10 @@ export const routes: RouteObject[] = [
       {
         path: '/admin/users',
         element: <AdminUsers />,
+      },
+      {
+        path: '/admin/tags',
+        element: <AdminTags />,
       },
     ],
   },

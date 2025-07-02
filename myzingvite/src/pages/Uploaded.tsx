@@ -2,7 +2,7 @@ import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
 import Cookies from 'js-cookie';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { instance } from '../apis/instance';
+import { getMySongs } from '../apis/SongService';
 import type { SongResponse } from '../types/Song';
 
 const SongCard = ({ name, imageUrl, singers, id }: SongResponse) => {
@@ -73,14 +73,9 @@ const Uploaded = () => {
   const [songs, setSongs] = useState<SongResponse[]>([]);
 
   useEffect(() => {
-    const token = Cookies.get('token');
     const fetchData = async () => {
-      const response = await instance.get('/auth/songs/my-song', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setSongs(response.data.content);
+      const response = await getMySongs();
+      setSongs(response.content);
     }
     fetchData();
   }, []);

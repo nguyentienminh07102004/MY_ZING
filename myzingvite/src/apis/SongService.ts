@@ -3,14 +3,13 @@ import type { SongResponse } from "../types/Song";
 import { instance } from "./instance";
 import Cookies from "js-cookie";
 
-const token = Cookies.get('token');
-
 export const getSongService = async (): Promise<PagedModel<SongResponse>> => {
     const res = await instance.get('/songs');
     return res.data;
 }
 
 export const deleteSongByIdService = async (id: string) => {
+    const token = Cookies.get('token');
     await instance.delete(`/auth/songs/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -41,8 +40,10 @@ export const likeSongService = async (songId: string) => {
     });
 }
 
-export const getAllSongs = async (page: number, limit: number) => {
-    const res: PagedModel<SongResponse> = await instance.get('/public/songs', { params: { page: page, limit: limit } });
+export const getAllSongs = async (page: number, limit: number, params?: { [key: string]: string }) => {
+    const res: PagedModel<SongResponse> = (await instance.get('/public/songs',
+        { params: { page: page, limit: limit, ...params } })
+    ).data;
     return res;
 }
 
@@ -51,4 +52,24 @@ export const getRelatedSongs = async (songId: string, limit: number = 6) => {
         params: { limit: limit }
     })).data;
     return res;
+}
+
+export const getMySongs = async () => {
+    const token = Cookies.get('token');
+    const response = (await instance.get('/auth/songs/my-song', {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })).data;
+    return response as PagedModel<SongResponse>;
+}
+
+export const createdSong = async (formData: FormData) => {
+    const token = Cookies.get('token');
+    await instance.post('/auth/songs', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`
+        },
+    });
 }
