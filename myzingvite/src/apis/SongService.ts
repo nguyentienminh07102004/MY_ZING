@@ -83,3 +83,13 @@ export const updateSongService = async (formData: FormData) => {
         }
     })
 }
+
+export const getMyFavouriteSong = async (page: number = 1, limit: number = 10) => {
+    const token = Cookies.get('token');
+    return (await instance.get('/auth/songs/my-favourites', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        params: { page, limit }
+    })).data as PagedModel<SongResponse>;    
+}

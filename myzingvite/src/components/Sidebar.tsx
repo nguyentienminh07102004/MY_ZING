@@ -22,7 +22,7 @@ const mainMenuItems = [
   { text: 'Khám Phá', icon: <HomeIcon />, path: '/' },
   { text: 'Thư Viện', icon: <LibraryMusicIcon />, path: '/main' },
   { text: 'Đã Tải Lên', icon: <CloudUploadIcon />, path: '/uploaded' },
-  { text: 'Nhạc Yêu Thích', icon: <FavoriteIcon />, path: '/favourite' },
+  { text: 'Nhạc Yêu Thích', icon: <FavoriteIcon />, path: '/my-favourites' },
   { text: 'Playlist Của Tôi', icon: <PlaylistPlayIcon />, path: '/my-playlist' },
   { text: 'Top 100', icon: <AlbumIcon />, path: '/top100' },
 ];

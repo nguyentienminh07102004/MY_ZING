@@ -6,6 +6,7 @@ import type { SongResponse } from '../types/Song';
 import ConfirmDialog from './ConfirmDialog';
 import SongEditModal from './SongEditModal';
 import RelatedSongs from '../components/RelatedSongs';
+import Cookies from 'js-cookie';
 
 const SongDetail = () => {
   const { id } = useParams();
@@ -15,6 +16,9 @@ const SongDetail = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const navigate = useNavigate();
+  const token = Cookies.get('token');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('USER');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,6 +27,11 @@ const SongDetail = () => {
         setLoading(true);
         const song: SongResponse = await getSongById(id);
         setSong(song);
+        if (token) {
+          const { sub, scope } = JSON.parse(atob(token.split('.')[1] as string));
+          setEmail(sub);
+          setRole(scope);
+        }
       }
       catch (e) {
         setError("Not found");
@@ -91,9 +100,9 @@ const SongDetail = () => {
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={{ xs: 1, sm: 3 }}
                 sx={{ mt: 2, mb: 2 }}>
-                <Typography variant='body2'>Người tạo: {song.email}</Typography>
+                <Typography variant='body2'>Người tạo: {song.email}{email === song.email && ' (Bạn)'}</Typography>
               </Stack>
-              <Stack
+              {((email && email === song.email) || role === 'ADMIN') && <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
                 sx={{ justifyContent: { xs: 'center', sm: 'flex-start' } }}
@@ -128,7 +137,7 @@ const SongDetail = () => {
                 >
                   Xoá
                 </button>
-              </Stack>
+              </Stack>}
             </Box>
           </Paper>
         </Box>

@@ -47,3 +47,14 @@ export const getPublicPlaylists = async (page: number = 1, limit: number = 10) =
   });
   return playlistsResponse.data as PagedModel<PlaylistResponse>;
 }
+
+export const getMyPlaylist = async (page: number = 1, limit: number = 10) => {
+  const token = Cookies.get('token');
+  const playlistsResponse = await instance.get('/auth/playlists/my-playlists', {
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    params: { page, limit }
+  });
+  return playlistsResponse.data as PagedModel<PlaylistResponse>;
+}

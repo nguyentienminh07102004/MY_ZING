@@ -110,4 +110,13 @@ public class PlaylistServiceImpl implements IPlaylistService {
             this.userFavouritePlaylistRepository.deleteByPlaylist_IdAndUser_Email(playlistId, email);
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedModel<PlaylistResponse> getMyPlaylist(Integer page, Integer limit) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Pageable pageable = PaginationUtils.getPageRequest(page, limit);
+        Page<PlaylistEntity> playlistEntities = this.playlistRepository.findByUser_Email(email, pageable);
+        return new PagedModel<>(playlistEntities.map(this.playlistMapper::toResponse));
+    }
 }

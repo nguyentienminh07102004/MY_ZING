@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IPlaylistRepository extends JpaRepository<PlaylistEntity, String> {
     Page<PlaylistEntity> findByCommunalIsTrue(Pageable pageable);
+
+    Page<PlaylistEntity> findByUser_Email(String userEmail, Pageable pageable);
 }

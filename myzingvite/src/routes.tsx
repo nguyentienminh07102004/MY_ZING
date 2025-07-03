@@ -10,6 +10,8 @@ import SongDetail from './pages/SongDetail';
 import Register from './pages/Register';
 import AdminUsers from './pages/AdminUsers';
 import AdminTags from './pages/AdminTags';
+import MyFavouritePage from './pages/MyFavourites';
+import MyFavouritePlaylist from './pages/MyFavouritePlaylist';
 
 export const routes: RouteObject[] = [
   {
@@ -56,6 +58,14 @@ export const routes: RouteObject[] = [
         path: '/admin/tags',
         element: <AdminTags />,
       },
+      {
+        path: '/my-favourites',
+        element: <MyFavouritePage />
+      },
+      {
+        path: '/my-playlist',
+        element: <MyFavouritePlaylist />
+      }
     ],
   },
 ]; 

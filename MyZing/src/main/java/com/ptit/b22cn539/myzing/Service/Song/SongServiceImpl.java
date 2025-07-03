@@ -131,10 +131,10 @@ public class SongServiceImpl implements ISongService {
             userSongFavouriteEntity.setSong(song);
             song.getUserSongFavourites().add(userSongFavouriteEntity);
             this.songRepository.save(song);
-            this.redisTemplate.delete(SongElasticsearchService.getKeyBySongId(id));
         } else {
             this.userFavouriteSongRepository.deleteByUser_EmailAndSong_Id(email, id);
         }
+        this.redisTemplate.delete(SongElasticsearchService.getKeyBySongId(id));
     }
 
     @Override

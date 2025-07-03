@@ -4,15 +4,18 @@ import com.ptit.b22cn539.myzing.DTO.Request.Playlist.PlaylistRequest;
 import com.ptit.b22cn539.myzing.DTO.Response.Playlist.PlaylistResponse;
 import com.ptit.b22cn539.myzing.Service.Playlist.IPlaylistService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -47,5 +50,12 @@ public class PlaylistAuthenticationController {
     public ResponseEntity<Void> likePlaylist(@PathVariable String playlistId) {
         this.playlistService.likePlaylist(playlistId);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/my-playlists")
+    public ResponseEntity<PagedModel<PlaylistResponse>> getMyPlaylist(@RequestParam(required = false) Integer page,
+                                                                      @RequestParam(required = false) Integer limit) {
+        PagedModel<PlaylistResponse> playlists = this.playlistService.getMyPlaylist(page, limit);
+        return new ResponseEntity<>(playlists, HttpStatus.OK);
     }
 }

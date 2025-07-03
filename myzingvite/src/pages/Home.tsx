@@ -1,110 +1,23 @@
-import { Box, Card, CardContent, CardMedia, Grid, Pagination, Typography } from '@mui/material';
+import { Box, Grid, Pagination, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getPublicPlaylists } from '../apis/PlaylistService';
 import { getAllSongs } from '../apis/SongService';
+import { PlaylistCard } from '../components/Playlist';
+import { SongCard } from '../components/SongCard';
 import type { PlaylistResponse } from '../types/Playlist';
 import type { SongResponse } from '../types/Song';
 
 const Home = () => {
   const [playlists, setPlaylists] = useState<PlaylistResponse[]>([]);
   const [songs, setSongs] = useState<SongResponse[]>([]);
-  const navigate = useNavigate();
   const [playlistPage, setPlaylistPage] = useState(1);
   const [playlistTotalPages, setPlaylistTotalPages] = useState(1);
   const [songPage, setSongPage] = useState(1);
   const [songTotalPages, setSongTotalPages] = useState(1);
   const [searchParams] = useSearchParams();
   const pageSize = 6;
-
-  const PlaylistCard = ({ name, songs, image, id }: PlaylistResponse) => (
-    <Card
-      sx={{
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        overflow: 'hidden',
-        transition: 'transform 0.3s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-5px)',
-        },
-        cursor: 'pointer',
-      }}
-    >
-      <CardMedia
-        component="img"
-        height="200"
-        image={image || 'https://photo-resize-zmp3.zmdcdn.me/w320_r1x1_jpeg/cover/4/c/c/c/4ccc7780abb5e8e2de84218f0f6d2ebd.jpg'}
-        alt={name}
-        sx={{ objectFit: 'cover' }}
-        onClick={() => navigate(`/playlist/${id}`)}
-      />
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {name}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {songs?.length || 0} bài hát
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-
-  const SongCard = ({ id, name, imageUrl, singers }: SongResponse) => (
-    <Card
-      onClick={() => {
-        localStorage.setItem('songId', id);
-        const evt = new CustomEvent('songIdChange');
-        window.dispatchEvent(evt);
-        navigate(`/song/${id}`);
-      }}
-      sx={{
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        overflow: 'hidden',
-        transition: 'transform 0.3s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-5px)',
-        },
-        cursor: 'pointer',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      <CardMedia
-        component="img"
-        height="200"
-        image={imageUrl || 'https://photo-resize-zmp3.zmdcdn.me/w320_r1x1_jpeg/cover/4/c/c/c/4ccc7780abb5e8e2de84218f0f6d2ebd.jpg'}
-        alt={name}
-        sx={{ objectFit: 'cover' }}
-      />
-      <CardContent sx={{ flexGrow: 1, p: 2 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            mb: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {name}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {singers.map(singer => singer.fullName).join(', ')}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-
+  
   useEffect(() => {
     const fetchData = async () => {
       const playlistsResponse = await getPublicPlaylists(playlistPage, pageSize);

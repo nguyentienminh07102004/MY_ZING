@@ -15,4 +15,5 @@ public interface IPlaylistService {
     PlaylistResponse getPlaylistResponseById(String id);
     PagedModel<PlaylistResponse> getAllPlaylistPublic(Integer page, Integer limit);
     void likePlaylist(String playlistId);
+    PagedModel<PlaylistResponse> getMyPlaylist(Integer page, Integer limit);
 }
