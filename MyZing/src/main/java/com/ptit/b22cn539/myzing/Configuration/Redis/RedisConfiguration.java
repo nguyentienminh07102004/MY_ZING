@@ -9,6 +9,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisConfiguration {
@@ -27,8 +28,8 @@ public class RedisConfiguration {
         JdkSerializationRedisSerializer serializationRedisSerializer = new JdkSerializationRedisSerializer();
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(this.connectionFactory());
-        template.setKeySerializer(serializationRedisSerializer);
-        template.setHashKeySerializer(serializationRedisSerializer);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(serializationRedisSerializer);
         template.setValueSerializer(serializationRedisSerializer);
         template.afterPropertiesSet();

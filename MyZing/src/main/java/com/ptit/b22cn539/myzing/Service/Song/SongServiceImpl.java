@@ -88,7 +88,7 @@ public class SongServiceImpl implements ISongService {
             }
             String imageUrl = this.awsService.uploadFile(image);
             request.setImageUrl(imageUrl);
-        }
+        } else if (StringUtils.hasText(request.getImageUrl())) request.setImageUrl(song.getImageUrl());
         Set<SingerEntity> singers = this.singerService.findAll(request.getSingers());
         String fileKey = song.getUrl();
         if (file != null && !file.isEmpty()) {

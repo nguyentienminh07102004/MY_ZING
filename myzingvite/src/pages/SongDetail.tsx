@@ -38,17 +38,17 @@ const SongDetail = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 6, p: { xs: 2, md: 3 } }}>
-      <Box sx={{ 
-        display: 'grid', 
+      <Box sx={{
+        display: 'grid',
         gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
         gap: { xs: 2, md: 4 }
       }}>
         <Box>
-          <Paper elevation={3} sx={{ 
-            p: { xs: 2, md: 3 }, 
-            display: 'flex', 
-            gap: { xs: 2, md: 3 }, 
-            alignItems: 'flex-start', 
+          <Paper elevation={3} sx={{
+            p: { xs: 2, md: 3 },
+            display: 'flex',
+            gap: { xs: 2, md: 3 },
+            alignItems: 'flex-start',
             height: 'fit-content',
             flexDirection: { xs: 'column', sm: 'row' }
           }}>
@@ -56,19 +56,19 @@ const SongDetail = () => {
               src={song.imageUrl}
               alt={song.name}
               variant="rounded"
-              sx={{ 
-                width: { xs: 120, sm: 160 }, 
-                height: { xs: 120, sm: 160 }, 
+              sx={{
+                width: { xs: 120, sm: 160 },
+                height: { xs: 120, sm: 160 },
                 mr: { xs: 0, sm: 3 },
                 mb: { xs: 2, sm: 0 },
                 alignSelf: { xs: 'center', sm: 'flex-start' }
               }}
             />
             <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
-              <Typography 
-                variant="h4" 
-                fontWeight={700} 
-                gutterBottom 
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                gutterBottom
                 sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' } }}
               >
                 {song.name}
@@ -79,27 +79,33 @@ const SongDetail = () => {
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 {song.description}
               </Typography>
-              <Stack 
-                direction={{ xs: 'column', sm: 'row' }} 
-                spacing={{ xs: 1, sm: 3 }} 
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 1, sm: 3 }}
                 sx={{ mt: 2, mb: 2 }}
               >
                 <Typography variant="body2">Ngày tạo: {new Date(song.createdDate).toLocaleDateString()}</Typography>
                 <Typography variant="body2">Lượt nghe: {song.numberOfListens}</Typography>
               </Stack>
-              <Stack 
-                direction={{ xs: 'column', sm: 'row' }} 
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 1, sm: 3 }}
+                sx={{ mt: 2, mb: 2 }}>
+                <Typography variant='body2'>Người tạo: {song.email}</Typography>
+              </Stack>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
                 sx={{ justifyContent: { xs: 'center', sm: 'flex-start' } }}
               >
                 <button
-                  style={{ 
-                    padding: '8px 16px', 
-                    background: '#1976d2', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: 4, 
-                    cursor: 'pointer', 
+                  style={{
+                    padding: '8px 16px',
+                    background: '#1976d2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
                     fontWeight: 600,
                     minWidth: '80px'
                   }}
@@ -108,13 +114,13 @@ const SongDetail = () => {
                   Sửa
                 </button>
                 <button
-                  style={{ 
-                    padding: '8px 16px', 
-                    background: '#d32f2f', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: 4, 
-                    cursor: 'pointer', 
+                  style={{
+                    padding: '8px 16px',
+                    background: '#d32f2f',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
                     fontWeight: 600,
                     minWidth: '80px'
                   }}
@@ -143,8 +149,9 @@ const SongDetail = () => {
         content="Bạn có chắc chắn muốn xoá bài hát này?"
         onClose={() => setConfirmOpen(false)}
         onConfirm={async () => {
+          if (!id) return;
           await deleteSongByIdService(id as string);
-          navigate('/');
+          navigate(-1);
         }}
       />
     </Box>

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface ITagService {
-    PagedModel<TagResponse> getAllTags(Integer page, Integer limit);
+    PagedModel<TagResponse> getAllTags(String name, Integer page, Integer limit);
     Set<TagEntity> getTagsByIds(List<String> ids);
     TagEntity getTagById(String id);
     TagResponse createTag(TagCreateRequest tagCreateRequest);

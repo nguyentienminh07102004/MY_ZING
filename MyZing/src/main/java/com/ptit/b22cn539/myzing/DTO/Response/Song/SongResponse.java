@@ -26,5 +26,6 @@ public class SongResponse implements Serializable {
     private Long numberOfListens;
     @Builder.Default
     private Boolean isLike = false;
+    private String email;
     private List<SingerResponse> singers;
 }

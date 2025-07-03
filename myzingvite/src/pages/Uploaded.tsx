@@ -25,7 +25,8 @@ const SongCard = ({ name, imageUrl, singers, id }: SongResponse) => {
         cursor: 'pointer',
         height: '100%',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        minWidth: '20rem'
       }}
     >
       <CardMedia
@@ -80,7 +81,7 @@ const Uploaded = () => {
     fetchData();
   }, []);
   return (
-    <Box>
+    <Box sx={{ width: '100%' }}>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
         Bài Hát Đã Tải Lên
       </Typography>
@@ -89,10 +90,11 @@ const Uploaded = () => {
         display: 'flex',
         flexWrap: 'wrap',
         gap: 3,
-        justifyContent: 'space-between'
+        justifyContent: 'flex-start',
+        width: '100%'
       }}>
-        {songs?.map((song, index) => (
-          <Box key={index} sx={{ width: 'calc(33.333% - 16px)' }}>
+        {songs?.map((song) => (
+          <Box key={song.id} sx={{ width: 'calc(100% / 3 - 16px)', flexShrink: 0, minWidth: '20rem' }}>
             <SongCard {...song} />
           </Box>
         ))}

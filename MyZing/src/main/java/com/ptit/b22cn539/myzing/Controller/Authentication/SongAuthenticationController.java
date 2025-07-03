@@ -42,6 +42,7 @@ public class SongAuthenticationController {
     }
 
     @PutMapping()
+    @PreAuthorize("@securityUtils.isSongByAdminOrOwner(#request.id)")
     public ResponseEntity<SongResponse> updateSong(@RequestPart(value = "file", required = false) MultipartFile file,
                                                    @RequestPart(value = "image", required = false) MultipartFile image,
                                                    @Valid @RequestPart(value = "data") SongUpdateRequest request) {

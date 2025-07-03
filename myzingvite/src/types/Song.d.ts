@@ -8,6 +8,7 @@ export interface SongResponse {
     imageUrl: string;
     createdDate: string;
     numberOfListens: number;
+    email: string;
     isLike: boolean;
     singers: SingerResponse[];
 }

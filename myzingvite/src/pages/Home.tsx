@@ -154,11 +154,11 @@ const Home = () => {
           width: "100%",
           justifyContent: 'flex-start',
         }}>
-          {songs?.map((song, index) => (
-            <Box key={index} sx={{
-              width: '300px',
-              height: '350px',
-              flexShrink: 0
+          {songs?.map((song) => (
+            <Box key={song.id} sx={{
+              width: 'calc(100% / 3 - 1.5rem)',
+              flexShrink: 0,
+              minWidth: '20rem'
             }}
             >
               <SongCard {...song} />

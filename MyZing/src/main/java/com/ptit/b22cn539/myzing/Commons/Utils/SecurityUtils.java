@@ -53,4 +53,14 @@ public class SecurityUtils {
         }
         return playlist.getUser().equals(user);
     }
+
+    public boolean isSongByAdminOrOwner(String id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = this.userService.getUserByEmail(email);
+        if (user.getRole().equals(ROLE.ADMIN)) {
+            return true;
+        }
+        SongEntity song = this.songService.getSongById(id);
+        return song.getUser().equals(user);
+    }
 }

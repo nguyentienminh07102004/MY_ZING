@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -26,9 +27,10 @@ public class TagServiceImpl implements ITagService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedModel<TagResponse> getAllTags(Integer page, Integer limit) {
+    public PagedModel<TagResponse> getAllTags(String name, Integer page, Integer limit) {
         Pageable pageable = PaginationUtils.getPageRequest(page, limit);
-        Page<TagEntity> tags = this.tagRepository.findAll(pageable);
+        if (!StringUtils.hasText(name)) name = null;
+        Page<TagEntity> tags = this.tagRepository.findAll(name, pageable);
         return new PagedModel<>(tags.map(TagResponse::new));
     }
 
@@ -61,7 +63,7 @@ public class TagServiceImpl implements ITagService {
     @Override
     @Transactional
     public TagResponse updateTag(TagUpdateRequest tagUpdateRequest) {
-        TagEntity tag = this.getTagById(tagUpdateRequest.getName());
+        TagEntity tag = this.getTagById(tagUpdateRequest.getId());
         tag.setDescription(tagUpdateRequest.getDescription());
         this.tagRepository.save(tag);
         return new TagResponse(tag);

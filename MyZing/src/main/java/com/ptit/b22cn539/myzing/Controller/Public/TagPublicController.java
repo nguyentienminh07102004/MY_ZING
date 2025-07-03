@@ -19,8 +19,9 @@ public class TagPublicController {
 
     @GetMapping()
     public ResponseEntity<PagedModel<TagResponse>> getAllTags(@RequestParam(required = false) Integer page,
-                                                              @RequestParam(required = false) Integer limit) {
-        PagedModel<TagResponse> tags = this.tagService.getAllTags(page, limit);
+                                                              @RequestParam(required = false) Integer limit,
+                                                              @RequestParam(required = false) String name) {
+        PagedModel<TagResponse> tags = this.tagService.getAllTags(name, page, limit);
         return ResponseEntity.status(HttpStatus.OK).body(tags);
     }
 }

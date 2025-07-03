@@ -73,3 +73,13 @@ export const createdSong = async (formData: FormData) => {
         },
     });
 }
+
+export const updateSongService = async (formData: FormData) => {
+    const token = Cookies.get('token');
+    return await instance.put('/auth/songs', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`
+        }
+    })
+}

@@ -216,6 +216,7 @@ public class SongElasticsearchService implements ISongElasticsearchService {
     }
 
     @KafkaListener(topics = KafkaEnvProperties.DELETE_TOPIC, groupId = "deleteTopic", concurrency = "5")
+    @Transactional
     public void deleteSong(List<String> ids) {
         this.elasticsearchOperations.delete(DeleteQuery.builder(NativeQuery.builder()
                         .withQuery(builder -> builder.ids(id -> id.values(ids)))
@@ -225,13 +226,14 @@ public class SongElasticsearchService implements ISongElasticsearchService {
 
     private String getSearchKey(SongSearchRequest songSearchRequest) {
         Pageable pageable = PaginationUtils.getPageRequest(songSearchRequest.getPage(), songSearchRequest.getLimit());
-        return "song:%s:%s:%s:%s:%s:%s:%d:%d".formatted(
+        return "song:%s:%s:%s:%s:%s:%s:%s:%d:%d".formatted(
                 Objects.toString(songSearchRequest.getName(), "_"),
                 Objects.toString(songSearchRequest.getSingerIds(), "_"),
                 Objects.toString(songSearchRequest.getCreatedDateFrom(), "_"),
                 Objects.toString(songSearchRequest.getCreatedDateTo(), "_"),
                 Objects.toString(songSearchRequest.getSortBy(), "_"),
                 Objects.toString(songSearchRequest.getSortOrder(), "_"),
+                Objects.toString(songSearchRequest.getEmail(), "_"),
                 pageable.getPageNumber(),
                 pageable.getPageSize()
         );

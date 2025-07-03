@@ -31,6 +31,7 @@ public class SongMapper {
                 .createdDate(song.getCreatedDate())
                 .numberOfListens(song.getNumberOfListens())
                 .url(this.awsService.getUrl(song.getUrl()))
+                .email(song.getUser().getEmail())
                 .imageUrl(this.awsService.getUrl(song.getImageUrl()))
                 .singers(singers)
                 .build();
@@ -52,6 +53,7 @@ public class SongMapper {
                 .description(song.getDescription())
                 .createdDate(song.getCreatedDate())
                 .numberOfListens(song.getNumberOfListens())
+                .email(song.getEmail())
                 .imageUrl(this.awsService.getUrl(song.getImageUrl()))
                 .url(this.awsService.getUrl(song.getUrl()))
                 .singers(singers)

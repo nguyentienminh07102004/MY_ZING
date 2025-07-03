@@ -74,6 +74,8 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/public/users/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/public/users/login/google").permitAll()
 
+                .requestMatchers("/auth/tags").hasRole(ROLE.ADMIN.toString())
+
                 .requestMatchers("/swagger-ui/**", "/css/**", "/js/*", "/v3/**").permitAll()
 
                 .requestMatchers("/fakes/**").permitAll()

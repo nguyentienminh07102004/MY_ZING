@@ -13,7 +13,5 @@ public interface ISingerService {
     Set<SingerEntity> findAll(List<String> ids);
     SingerEntity findById(String id);
     SingerResponse createSinger(SingerRequest singerRequest, MultipartFile avatar);
-    List<SingerEntity> findAll();
-
     PagedModel<SingerResponse> getAllSingers(Integer page, Integer limit);
 }

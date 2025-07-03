@@ -53,11 +53,6 @@ public class SingerServiceImpl implements ISingerService {
     }
 
     @Override
-    public List<SingerEntity> findAll() {
-        return this.singerRepository.findAll();
-    }
-
-    @Override
     @Transactional
     public PagedModel<SingerResponse> getAllSingers(Integer page, Integer limit) {
         Pageable pageable = PaginationUtils.getPageRequest(page, limit);
